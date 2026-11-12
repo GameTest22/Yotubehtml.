@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎬 YouTuber Life - チャンネル成長シミュレーター</title>
+<style>
+    :root {
+        --primary: #ff0050;
+        --secondary: #ff4081;
+        --gradient: linear-gradient(90deg, #ff0050, #ff4081);
+        --bg-dark: #0f0f1e;
+        --bg-mid: #1a1a2e;
+        --bg-light: #252540;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #fff;
+        min-height: 100vh;
+        padding: 10px;
+    }
+    .game-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: var(--bg-dark);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        overflow: hidden;
+    }
+    header {
+        background: var(--gradient);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    header h1 { font-size: 1.3rem; }
+    .header-stats {
+        display: flex; gap: 15px; font-size: 0.9rem; flex-wrap: wrap;
+    }
+    .header-stats span {
+        background: rgba(0,0,0,0.3);
+        padding: 5px 10px; border-radius: 20px;
+    }
+
+    .setup-screen { padding: 30px 20px; text-align: center; }
+    .setup-screen h2 { color: var(--secondary); margin-bottom: 20px; font-size: 1.5rem; }
+    .setup-screen input {
+        width: 100%; max-width: 400px;
+        padding: 12px; font-size: 1rem;
+        border: 2px solid #444; border-radius: 8px;
+        background: var(--bg-mid); color: #fff;
+        margin-bottom: 20px;
+    }
+    .setup-screen input:focus { outline: none; border-color: var(--secondary); }
+    .icon-picker {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 10px; max-width: 500px;
+        margin: 0 auto 20px;
+    }
+    .icon-option {
+        aspect-ratio: 1;
+        background: var(--bg-mid);
+        border: 3px solid #444;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .icon-option:hover { border-color: var(--secondary); transform: scale(1.1); }
+    .icon-option.selected {
+        border-color: var(--primary);
+        background: #2a1a3e;
+        box-shadow: 0 0 20px rgba(255,0,80,0.5);
+    }
+    .btn {
+        background: var(--gradient);
+        color: #fff; border: none;
+        padding: 12px 30px; font-size: 1rem; font-weight: bold;
+        border-radius: 25px; cursor: pointer;
+        transition: transform 0.1s, box-shadow 0.2s;
+        margin: 5px;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,0,80,0.4); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: #333; }
+    .btn-danger { background: linear-gradient(90deg, #8b0000, #cc0000); font-size: 0.9rem; padding: 10px 20px; }
+    .btn-short { background: linear-gradient(90deg, #ff0050, #ff6b6b); }
+    .btn-community { background: linear-gradient(90deg, #4a90e2, #67b26f); }
+    .btn-compilation { background: linear-gradient(90deg, #9c27b0, #e91e63); }
+    .btn-sub { background: linear-gradient(90deg, #00bcd4, #2196f3); }
+    .btn-landing { background: linear-gradient(90deg, #00bcd4, #2196f3); }
+
+    .tabs {
+        display: flex; background: var(--bg-mid);
+        border-bottom: 1px solid #333;
+        overflow-x: auto;
+    }
+    .tab {
+        flex: 1; padding: 12px 8px; text-align: center;
+        cursor: pointer; border-bottom: 3px solid transparent;
+        transition: all 0.2s; white-space: nowrap; font-size: 0.85rem;
+    }
+    .tab:hover { background: var(--bg-light); }
+    .tab.active { border-bottom-color: var(--primary); color: var(--secondary); background: var(--bg-light); }
+    .tab-content { display: none; padding: 20px; min-height: 400px; }
+    .tab-content.active { display: block; }
+
+    .channel-card {
+        background: linear-gradient(135deg, #2a1a3e, var(--bg-mid));
+        border-radius: 12px; padding: 20px;
+        margin-bottom: 20px;
+        display: flex; gap: 20px; align-items: center;
+        flex-wrap: wrap;
+    }
+    .channel-icon-big {
+        width: 100px; height: 100px;
+        border-radius: 50%; background: var(--gradient);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 3rem; border: 4px solid #fff;
+        flex-shrink: 0;
+    }
+    .channel-info h2 { font-size: 1.5rem; margin-bottom: 5px; }
+    .channel-info p { color: #aaa; font-size: 0.9rem; }
+    .channel-badge {
+        display: inline-block;
+        background: var(--primary);
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 8px;
+    }
+    .channel-badge.sub { background: #00bcd4; }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px; margin-top: 15px;
+    }
+    .stat-box {
+        background: var(--bg-mid); padding: 15px;
+        border-radius: 10px; text-align: center;
+        border-left: 4px solid var(--primary);
+    }
+    .stat-box .value { font-size: 1.4rem; font-weight: bold; color: var(--secondary); }
+    .stat-box .label { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
+
+    .trend-banner {
+        background: linear-gradient(90deg, #ff8c00, var(--secondary));
+        padding: 12px; border-radius: 10px;
+        margin-bottom: 15px; text-align: center;
+        font-weight: bold;
+    }
+
+    .channel-manager, .creator-box { background: var(--bg-mid); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+    .channel-manager h3 { color: #00bcd4; margin-bottom: 15px; font-size: 1.1rem; }
+    .channel-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px; margin-bottom: 15px;
+    }
+    .channel-list-item {
+        background: var(--bg-light);
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .channel-list-item:hover { border-color: var(--secondary); }
+    .channel-list-item.active {
+        border-color: var(--primary);
+        background: #3a1a4e;
+        box-shadow: 0 0 15px rgba(255,0,80,0.3);
+    }
+    .channel-list-item .mini-icon {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .channel-list-item .mini-info { flex: 1; min-width: 0; }
+    .channel-list-item .mini-name { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .channel-list-item .mini-subs { font-size: 0.75rem; color: #aaa; }
+
+    .creator-section { margin-bottom: 20px; }
+    .creator-section h3 { color: var(--secondary); margin-bottom: 10px; font-size: 1rem; }
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 8px;
+    }
+    .option-btn {
+        background: var(--bg-light); border: 2px solid #444;
+        color: #fff; padding: 10px; border-radius: 8px;
+        cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
+    }
+    .option-btn:hover:not(.locked) { border-color: var(--secondary); }
+    .option-btn.selected { background: var(--primary); border-color: var(--secondary); }
+    .text-input {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        border: 2px solid #444;
+        border-radius: 8px;
+        background: var(--bg-dark);
+        color: #fff;
+        font-family: inherit;
+    }
+    .text-input:focus { outline: none; border-color: var(--secondary); }
+    textarea.text-input { min-height: 100px; resize: vertical; }
+    .title-preview {
+        background: var(--bg-dark); padding: 15px;
+        border-radius: 8px; margin-top: 10px;
+        font-size: 1.1rem; min-height: 50px;
+        border-left: 4px solid var(--primary);
+        word-break: break-word;
+    }
+
+    .video-list { display: flex; flex-direction: column; gap: 10px; }
+    .video-item {
+        background: var(--bg-mid); padding: 15px;
+        border-radius: 10px;
+        display: grid; grid-template-columns: auto 1fr auto;
+        gap: 15px; align-items: center;
+    }
+    .video-thumb {
+        width: 80px; height: 60px;
+        background: var(--bg-light); border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem;
+    }
+    .video-thumb.short { background: linear-gradient(135deg, #ff0050, #ff6b6b); }
+    .video-thumb.community { background: linear-gradient(135deg, #4a90e2, #67b26f); }
+    .video-thumb.compilation { background: linear-gradient(135deg, #9c27b0, #e91e63); }
+    .video-thumb.fire { background: linear-gradient(135deg, #ff4500, #ff0000); animation: firePulse 1s infinite; }
+    @keyframes firePulse {
+        0%, 100% { box-shadow: 0 0 10px #ff4500; }
+        50% { box-shadow: 0 0 25px #ff0000; }
+    }
+    .video-details h4 { margin-bottom: 5px; font-size: 0.95rem; }
+    .video-details .meta { font-size: 0.8rem; color: #aaa; }
+    .video-results { text-align: right; font-size: 0.85rem; }
+    .video-results .views { color: var(--secondary); font-weight: bold; font-size: 1rem; }
+
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    .shop-item {
+        background: var(--bg-mid); padding: 15px;
+        border-radius: 10px; border: 2px solid #333;
+    }
+    .shop-item h4 { color: var(--secondary); margin-bottom: 8px; }
+    .shop-item p { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; }
+    .shop-item .level { color: #2ba640; font-size: 0.85rem; margin-bottom: 10px; }
+    .global-badge {
+        background: #00bcd4;
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        margin-left: 5px;
+        display: inline-block;
+    }
+
+    .community-post {
+        background: var(--bg-mid);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border-left: 4px solid #4a90e2;
+    }
+    .community-post .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .community-post .post-icon {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: var(--gradient);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem;
+    }
+    .community-post .post-name { font-weight: bold; }
+    .community-post .post-time { color: #888; font-size: 0.8rem; }
+    .community-post .post-text { font-size: 0.95rem; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
+    .community-post .post-stats { display: flex; gap: 15px; font-size: 0.85rem; color: #aaa; }
+    .community-post .post-stats span { display: flex; align-items: center; gap: 4px; }
+
+    .modal {
+        display: none; position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 100;
+        justify-content: center; align-items: center;
+        padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+        background: var(--bg-mid); border-radius: 16px;
+        padding: 25px; max-width: 500px; width: 100%;
+        max-height: 90vh; overflow-y: auto;
+        border: 2px solid var(--primary);
+    }
+    .modal-content h2 { color: var(--secondary); margin-bottom: 15px; text-align: center; }
+    .result-big {
+        text-align: center; padding: 20px;
+        background: var(--bg-dark); border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    .result-big .number { font-size: 2.5rem; font-weight: bold; color: var(--secondary); }
+    .result-big .label { color: #aaa; font-size: 0.9rem; }
+    .result-stats {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 10px; margin-bottom: 15px;
+    }
+    .result-stat { background: var(--bg-light); padding: 10px; border-radius: 8px; text-align: center; }
+    .comments-section { background: var(--bg-dark); padding: 15px; border-radius: 10px; margin-top: 10px; }
+    .comment { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; }
+    .comment:last-child { border-bottom: none; }
+    .comment-user { color: var(--secondary); font-weight: bold; margin-bottom: 3px; font-size: 0.8rem; }
+    .comment.fire { background: rgba(255,0,0,0.1); border-left: 3px solid #ff4500; }
+    .comment.fire .comment-user { color: #ff4500; }
+
+    .empty-state { text-align: center; padding: 40px; color: #666; }
+    .reset-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; text-align: center; }
+    .reset-section p { color: #888; font-size: 0.85rem; margin-bottom: 10px; }
+
+    .type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-right: 5px;
+    }
+    .type-badge.video { background: var(--primary); }
+    .type-badge.short { background: linear-gradient(90deg, #ff0050, #ff6b6b); }
+    .type-badge.community { background: linear-gradient(90deg, #4a90e2, #67b26f); }
+    .type-badge.compilation { background: linear-gradient(90deg, #9c27b0, #e91e63); }
+    .type-badge.fire { background: linear-gradient(90deg, #ff4500, #ff0000); animation: firePulse 1s infinite; }
+
+    .auto-title-hint {
+        background: rgba(255,64,129,0.1);
+        border-left: 3px solid var(--primary);
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #ffccdd;
+        margin-bottom: 15px;
+    }
+    .compilation-hint {
+        background: rgba(156,39,176,0.15);
+        border-left: 3px solid #9c27b0;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #e1bee7;
+        margin-bottom: 15px;
+    }
+    .compilation-hint strong { color: var(--secondary); }
+
+    .progress-bar { background: #333; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 8px; }
+    .progress-bar-fill { background: linear-gradient(90deg, #9c27b0, #e91e63); height: 100%; transition: width 0.3s; }
+
+    .global-money-banner {
+        background: linear-gradient(90deg, #00bcd4, #2196f3);
+        padding: 10px 15px; border-radius: 10px;
+        margin-bottom: 15px; text-align: center;
+        font-weight: bold; font-size: 0.95rem;
+    }
+    .equipment-status {
+        background: var(--bg-dark);
+        padding: 10px 15px; border-radius: 8px;
+        margin-bottom: 15px; font-size: 0.85rem;
+        color: #aaa; border-left: 3px solid #00bcd4;
+    }
+    .equipment-status strong { color: #00bcd4; }
+
+    .settings-section {
+        background: var(--bg-mid);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    .settings-section h3 {
+        color: var(--secondary);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .setting-row .setting-info { flex: 1; }
+    .setting-row .setting-name { font-weight: bold; margin-bottom: 3px; }
+    .setting-row .setting-desc { font-size: 0.8rem; color: #aaa; }
+
+    .toggle {
+        position: relative;
+        width: 60px;
+        height: 30px;
+        background: #555;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .toggle.on { background: var(--primary); }
+    .toggle::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 24px;
+        height: 24px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.3s;
+    }
+    .toggle.on::after { transform: translateX(30px); }
+
+    .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .theme-item {
+        background: var(--bg-dark);
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .theme-item:hover:not(.locked) { border-color: var(--secondary); transform: translateY(-2px); }
+    .theme-item.selected { border-color: var(--primary); box-shadow: 0 0 15px rgba(255,0,80,0.3); }
+    .theme-item.locked { opacity: 0.5; cursor: not-allowed; }
+    .theme-item .theme-preview {
+        width: 100%;
+        height: 40px;
+        border-radius: 6px;
+        margin-bottom: 5px;
+    }
+    .theme-item .theme-name { font-size: 0.8rem; font-weight: bold; }
+    .theme-item .theme-price { font-size: 0.7rem; color: #2ba640; }
+    .theme-item .theme-requirement { font-size: 0.7rem; color: #ff8c00; }
+
+    .theme-item.legendary {
+        border: 2px solid #FF0000;
+        position: relative;
+        overflow: hidden;
+    }
+    .theme-item.legendary::before {
+        content: '✨';
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 0.8rem;
+        animation: legendarySparkle 1.5s infinite;
+    }
+    @keyframes legendarySparkle {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .theme-item.legendary.locked {
+        border-color: #666;
+        opacity: 0.7;
+    }
+    .theme-item.legendary.selected {
+        border-color: #FF0000;
+        box-shadow: 0 0 25px rgba(255,0,0,0.6);
+    }
+
+    .fire-event {
+        background: linear-gradient(135deg, #3a0000, #1a0000);
+        border: 2px solid #ff4500;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        animation: fireGlow 2s infinite;
+    }
+    @keyframes fireGlow {
+        0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.3); }
+        50% { box-shadow: 0 0 30px rgba(255,0,0,0.6); }
+    }
+    .fire-event h3 {
+        color: #ff4500;
+        text-align: center;
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    .fire-event .fire-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .fire-event .fire-stat {
+        background: rgba(0,0,0,0.3);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .fire-event .fire-stat .val { font-size: 1.2rem; font-weight: bold; }
+    .fire-event .fire-stat .lbl { font-size: 0.75rem; color: #aaa; }
+    .fire-event .fire-stat.negative .val { color: #ff4500; }
+    .fire-event .fire-stat.positive .val { color: #2ba640; }
+
+    .fire-response-btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    /* ✅ 着陸ゲームスタイル */
+    .landing-game-container {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border: 2px solid #00bcd4;
+    }
+    #landingCanvas {
+        display: block;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, #000428 0%, #004e92 100%);
+    }
+    .landing-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        max-width: 300px;
+        margin: 15px auto;
+    }
+    .landing-btn {
+        background: var(--bg-light);
+        border: 2px solid #444;
+        color: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1.5rem;
+        transition: all 0.1s;
+        user-select: none;
+    }
+    .landing-btn:active {
+        background: var(--primary);
+        transform: scale(0.95);
+    }
+    .landing-btn.thrust {
+        background: linear-gradient(135deg, #ff8c00, #ff4081);
+        grid-column: 2;
+    }
+    .landing-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+    }
+    .landing-stat {
+        background: var(--bg-dark);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .landing-stat .val {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--secondary);
+    }
+    .landing-stat .lbl {
+        font-size: 0.75rem;
+        color: #aaa;
+    }
+    .landing-stat.danger .val { color: #ff4500; }
+    .landing-stat.safe .val { color: #2ba640; }
+
+    .landing-result {
+        text-align: center;
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .landing-result.success {
+        background: rgba(43,166,64,0.2);
+        border: 2px solid #2ba640;
+        color: #2ba640;
+    }
+    .landing-result.fail {
+        background: rgba(255,69,0,0.2);
+        border: 2px solid #ff4500;
+        color: #ff4500;
+    }
+
+    @media (max-width: 600px) {
+        .video-item { grid-template-columns: 1fr; }
+        .video-thumb { width: 100%; height: 80px; }
+        .video-results { text-align: left; }
+        .tab { font-size: 0.75rem; padding: 10px 5px; }
+        .landing-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <header>
+        <h1>🎬 YouTuber Life</h1>
+        <div class="header-stats" id="headerStats" style="display:none;">
+            <span>💰 <span id="hMoney">0</span>円</span>
+            <span>👥 <span id="hSubs">0</span>人</span>
+            <span>📅 <span id="hWeek">1</span>週目</span>
+        </div>
+    </header>
+
+    <div id="setupScreen" class="setup-screen">
+        <h2>🌟 新しいチャンネルを始めよう！</h2>
+        <p style="margin-bottom:20px; color:#aaa;">チャンネル名を決めて、アイコンを選ぼう</p>
+        <input type="text" id="channelNameInput" placeholder="チャンネル名を入力..." maxlength="20">
+        <h3 style="margin:20px 0 10px; color:var(--secondary);">アイコンを選ぼう</h3>
+        <div class="icon-picker" id="iconPicker"></div>
+        <button class="btn" id="startBtn" disabled>チャンネル開設！</button>
+    </div>
+
+    <div id="gameScreen" style="display:none;">
+        <div class="tabs">
+            <div class="tab active" data-tab="dashboard">📊 ホーム</div>
+            <div class="tab" data-tab="video">🎥 動画</div>
+            <div class="tab" data-tab="short">⚡ ショート</div>
+            <div class="tab" data-tab="compilation">📦 総集編</div>
+            <div class="tab" data-tab="community">💬 コミュニティ</div>
+            <div class="tab" data-tab="history">📜 履歴</div>
+            <div class="tab" data-tab="shop">🛒 ショップ</div>
+            <div class="tab" data-tab="landing">🚀 着陸</div>
+            <div class="tab" data-tab="settings">⚙️ 設定</div>
+        </div>
+
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="channel-manager">
+                <h3>📺 チャンネル管理 <span style="font-size:0.8rem; color:#aaa;">（最大3チャンネル）</span></h3>
+                <div class="channel-list" id="channelList"></div>
+                <button class="btn btn-sub" id="addChannelBtn" onclick="openAddChannelModal()">+ サブチャンネル作成</button>
+            </div>
+
+            <div class="channel-card">
+                <div class="channel-icon-big" id="dashIcon"></div>
+                <div class="channel-info">
+                    <h2 id="dashName">チャンネル名<span class="channel-badge" id="channelBadge">メイン</span></h2>
+                    <p id="dashDesc">登録者0人からのスタート。</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box"><div class="value" id="statSubs">0</div><div class="label">登録者数</div></div>
+                <div class="stat-box"><div class="value" id="statViews">0</div><div class="label">総再生数</div></div>
+                <div class="stat-box"><div class="value" id="statMoney">0</div><div class="label">所持金（共通）</div></div>
+                <div class="stat-box"><div class="value" id="statVideos">0</div><div class="label">投稿数</div></div>
+            </div>
+
+            <div class="trend-banner" style="margin-top:20px;">
+                🔥 今週のトレンド：<span id="trendGenre">なし</span>
+            </div>
+
+            <div style="text-align:center; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="nextWeek()">⏭️ 来週に進む</button>
+            </div>
+
+            <div class="reset-section">
+                <p>⚠️ 注意：リセットすると全てのデータが消えます</p>
+                <button class="btn btn-danger" onclick="confirmReset()">🗑️ データをリセット</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-video">
+            <div class="creator-box">
+                <h2 style="color:var(--secondary); margin-bottom:15px;">🎬 新しい動画を投稿</h2>
+                <p style="color:#aaa; margin-bottom:15px; font-size:0.9rem;">※制作費 <span style="color:var(--secondary); font-weight:bold;">50円</span></p>
+                <div class="auto-title-hint">💡 ジャンルと要素を選んでね！タイトルは自動で生成されます</div>
+                <div class="creator-section">
+                    <h3>① ジャンル（必須）</h3>
+                    <div class="option-grid" id="genreOptions"></div>
+                </div>
+                <div class="creator-section">
+                    <h3>② タイトル要素（1〜3つ選択）</h3>
+                    <div class="option-grid" id="titleOptions"></div>
+                </div>
+                <div class="creator-section">
+                    <h3>③ サムネイル（必須）</h3>
+                    <div class="option-grid" id="thumbOptions"></div>
+                </div>
+                <div class="creator-section">
+                    <h3>📝 生成されるタイトル</h3>
+                    <div class="title-preview" id="titlePreview">ジャンルと要素を選んでね...</div>
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="btn" id="publishVideoBtn" disabled onclick="publishVideo()">📤 投稿する（50円）</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-short">
+            <div class="creator-box">
+                <h2 style="color:var(--secondary); margin-bottom:15px;">⚡ ショート動画を投稿</h2>
+                <p style="color:#aaa; margin-bottom:15px; font-size:0.9rem;">※制作費 <span style="color:var(--secondary); font-weight:bold;">20円</span> ・ 再生数は伸びやすいが収益は低め</p>
+                <div class="auto-title-hint">💡 ジャンルと絵文字を選んでね！タイトルは自動で生成されます</div>
+                <div class="creator-section">
+                    <h3>① ジャンル（必須）</h3>
+                    <div class="option-grid" id="shortGenreOptions"></div>
+                </div>
+                <div class="creator-section">
+                    <h3>② 絵文字スタンプ（必須）</h3>
+                    <div class="option-grid" id="shortEmojiOptions"></div>
+                </div>
+                <div class="creator-section">
+                    <h3>📝 生成されるタイトル</h3>
+                    <div class="title-preview" id="shortPreview">ジャンルと絵文字を選んでね...</div>
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="btn btn-short" id="publishShortBtn" disabled onclick="publishShort()">⚡ ショートを投稿（20円）</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-compilation">
+            <div class="creator-box">
+                <h2 style="color:#9c27b0; margin-bottom:15px;">📦 総集編を投稿</h2>
+                <p style="color:#aaa; margin-bottom:15px; font-size:0.9rem;">※制作費 <span style="color:#9c27b0; font-weight:bold;">100円</span> ・ 過去動画の再生数ボーナス付き</p>
+                <div class="compilation-hint">
+                    ⚠️ <strong>総集編を投稿するには、動画（🎥）を5本以上投稿する必要があります</strong><br>
+                    現在の投稿数：<strong id="compilationProgress">0</strong> / 5本
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="compilationProgressBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="creator-section">
+                    <h3>📝 生成されるタイトル</h3>
+                    <div class="title-preview" id="compilationPreview">動画5本を投稿すると総集編が作成できます...</div>
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="btn btn-compilation" id="publishCompilationBtn" disabled onclick="publishCompilation()">📦 総集編を投稿（100円）</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-community">
+            <div class="creator-box" style="margin-bottom:20px;">
+                <h2 style="color:#4a90e2; margin-bottom:15px;">💬 コミュニティ投稿</h2>
+                <p style="color:#aaa; margin-bottom:20px; font-size:0.9rem;">※無料 ・ ファンとの交流で登録者維持・増加</p>
+                <div class="creator-section">
+                    <h3>📝 投稿内容（自由に入力）</h3>
+                    <textarea class="text-input" id="communityTextInput" placeholder="ファンに伝えたいことを書こう..."></textarea>
+                </div>
+                <div class="creator-section">
+                    <h3>😊 絵文字スタンプ（1つ選択）</h3>
+                    <div class="option-grid" id="communityEmojiOptions"></div>
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="btn btn-community" id="postCommunityBtn" disabled onclick="postCommunity()">📢 投稿する（無料）</button>
+                </div>
+            </div>
+            <h3 style="color:#4a90e2; margin-bottom:15px;">📜 過去のコミュニティ投稿</h3>
+            <div id="communityList"></div>
+        </div>
+
+        <div class="tab-content" id="tab-history">
+            <h2 style="color:var(--secondary); margin-bottom:15px;">📜 投稿履歴</h2>
+            <div id="videoList" class="video-list">
+                <div class="empty-state">まだ投稿がありません</div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-shop">
+            <div class="global-money-banner">💰 共通資金：<span id="shopMoneyDisplay">0</span>円（メイン・サブ共通）</div>
+            <div class="equipment-status">🛠️ <strong>機材は全チャンネル共通</strong>です</div>
+            <h2 style="color:var(--secondary); margin-bottom:15px;">🛒 機材・スキル強化（12種類）</h2>
+            <p style="color:#aaa; margin-bottom:20px; font-size:0.9rem;">機材を強化するとクオリティが上がる！</p>
+            <div id="shopGrid" class="shop-grid"></div>
+        </div>
+
+        <!-- ✅ 着陸ゲームタブ -->
+        <div class="tab-content" id="tab-landing">
+            <div class="creator-box">
+                <h2 style="color:#00bcd4; margin-bottom:15px;">🚀 着陸ゲーム</h2>
+                <p style="color:#aaa; margin-bottom:15px; font-size:0.9rem;">
+                    宇宙船を安全に着陸させよう！<br>
+                    成功で<strong style="color:#2ba640;">+500円</strong>、失敗で<strong style="color:#ff4500;">-200円</strong>
+                </p>
+                
+                <div class="landing-game-container">
+                    <canvas id="landingCanvas" width="600" height="400"></canvas>
+                </div>
+
+                <div class="landing-stats">
+                    <div class="landing-stat">
+                        <div class="val" id="landAltitude">0</div>
+                        <div class="lbl">高度 (m)</div>
+                    </div>
+                    <div class="landing-stat" id="landSpeedStat">
+                        <div class="val" id="landSpeed">0</div>
+                        <div class="lbl">速度 (m/s)</div>
+                    </div>
+                    <div class="landing-stat">
+                        <div class="val" id="landFuel">100</div>
+                        <div class="lbl">燃料 (%)</div>
+                    </div>
+                    <div class="landing-stat">
+                        <div class="val" id="landScore">0</div>
+                        <div class="lbl">成功回数</div>
+                    </div>
+                </div>
+
+                <div class="landing-controls">
+                    <div></div>
+                    <button class="landing-btn thrust" id="btnThrust">🔥</button>
+                    <div></div>
+                    <button class="landing-btn" id="btnLeft">⬅️</button>
+                    <button class="landing-btn" id="btnDown" style="visibility:hidden;"></button>
+                    <button class="landing-btn" id="btnRight">➡️</button>
+                </div>
+
+                <div style="text-align:center; margin-top:15px;">
+                    <button class="btn btn-landing" id="startLandingBtn" onclick="startLandingGame()">🚀 ゲーム開始</button>
+                    <button class="btn btn-secondary" id="resetLandingBtn" onclick="resetLandingGame()" style="display:none;">🔄 リセット</button>
+                </div>
+
+                <div id="landingResult" style="display:none;"></div>
+
+                <div style="margin-top:20px; padding:15px; background:var(--bg-dark); border-radius:8px; font-size:0.85rem; color:#aaa;">
+                    <strong style="color:#00bcd4;">🎮 操作方法:</strong><br>
+                    • 🔥 ボタン（または↑キー）: 噴射（燃料消費）<br>
+                    • ⬅️➡️ ボタン（または←→キー）: 左右移動<br>
+                    • 目標: 緑色の着陸パッドに速度2m/s以下で着陸<br>
+                    • 燃料が尽きると自由落下！
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-settings">
+            <div class="settings-section">
+                <h3>🔥 炎上設定</h3>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">炎上イベント <span style="color:#ff4500; font-size:0.8rem;">（5%の確率）</span></div>
+                        <div class="setting-desc">ON: 投稿時に5%の確率で炎上発生（クオリティに関係なし）<br>OFF: 炎上しない</div>
+                    </div>
+                    <div class="toggle" id="fireToggle" onclick="toggleFire()"></div>
+                </div>
+                <div style="font-size:0.8rem; color:#aaa; padding:10px; background:var(--bg-dark); border-radius:8px; margin-top:10px;">
+                    💡 炎上すると（どんな動画でも5%）：<br>
+                    • 再生数が<strong style="color:#2ba640;">10〜30倍</strong>に爆発<br>
+                    • 登録者が<strong style="color:#ff4500;">-10%〜-25%</strong>減少<br>
+                    • 広告収入は増えるがイメージ悪化<br>
+                    • 謝罪動画でダメージ半減可能
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>🎨 テーマカラー</h3>
+                <p style="color:#aaa; font-size:0.85rem; margin-bottom:10px;">ゲーム全体の見た目を変更できます</p>
+                
+                <h4 style="color:#aaa; font-size:0.9rem; margin:15px 0 8px;">🆓 無料テーマ</h4>
+                <div class="theme-grid" id="freeThemeGrid"></div>
+                
+                <h4 style="color:#aaa; font-size:0.9rem; margin:15px 0 8px;">💰 有料テーマ</h4>
+                <div class="theme-grid" id="paidThemeGrid"></div>
+                
+                <h4 style="color:#aaa; font-size:0.9rem; margin:15px 0 8px;">🏆 登録者報酬テーマ</h4>
+                <div class="theme-grid" id="rewardThemeGrid"></div>
+
+                <h4 style="color:#FF0000; font-size:0.9rem; margin:15px 0 8px; display:flex; align-items:center; gap:5px;">
+                    ✨ 幻のテーマ <span style="font-size:0.75rem; color:#aaa;">（？？？）</span>
+                </h4>
+                <div class="theme-grid" id="legendaryThemeGrid"></div>
+            </div>
+
+            <div class="settings-section">
+                <h3>ℹ️ ゲーム情報</h3>
+                <div style="font-size:0.85rem; color:#aaa; line-height:1.8;">
+                    <div>🎮 YouTuber Life v3.3</div>
+                    <div>📊 総プレイ時間：約<span id="playTime">0</span>週</div>
+                    <div>📹 総投稿数：<span id="totalPosts">0</span>本</div>
+                    <div>🔥 炎上回数：<span id="fireCount">0</span>回</div>
+                    <div>🚀 着陸成功：<span id="landingSuccess">0</span>回</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="resultModal">
+    <div class="modal-content">
+        <h2 id="resultTitle">📊 結果</h2>
+        <div class="result-big">
+            <div class="number" id="resultViews">0</div>
+            <div class="label" id="resultViewsLabel">再生数</div>
+        </div>
+        <div class="result-stats">
+            <div class="result-stat">
+                <div style="font-size:1.3rem; color:var(--secondary);" id="resultLikes">0</div>
+                <div style="font-size:0.8rem; color:#aaa;" id="resultLikesLabel">高評価</div>
+            </div>
+            <div class="result-stat">
+                <div style="font-size:1.3rem; color:var(--secondary);" id="resultSubs">+0</div>
+                <div style="font-size:0.8rem; color:#aaa;">新規登録者</div>
+            </div>
+            <div class="result-stat">
+                <div style="font-size:1.3rem; color:#2ba640;" id="resultMoney">+0</div>
+                <div style="font-size:0.8rem; color:#aaa;">収入</div>
+            </div>
+            <div class="result-stat">
+                <div style="font-size:1.3rem;" id="resultRating">-</div>
+                <div style="font-size:0.8rem; color:#aaa;">評価</div>
+            </div>
+        </div>
+        <div class="comments-section">
+            <h3 style="color:var(--secondary); margin-bottom:10px;" id="commentsTitle">💬 コメント</h3>
+            <div id="resultComments"></div>
+        </div>
+        <div style="text-align:center; margin-top:15px;">
+            <button class="btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="fireModal">
+    <div class="modal-content">
+        <div class="fire-event">
+            <h3>🔥 炎上しました！ 🔥</h3>
+            <p style="text-align:center; color:#ff8c8c; margin-bottom:15px; font-size:0.9rem;" id="fireReason">理由：予期せぬトラブル</p>
+            <div class="fire-stats">
+                <div class="fire-stat positive">
+                    <div class="val" id="fireViews">+0</div>
+                    <div class="lbl">追加再生数</div>
+                </div>
+                <div class="fire-stat negative">
+                    <div class="val" id="fireSubsLoss">-0</div>
+                    <div class="lbl">登録者減少</div>
+                </div>
+                <div class="fire-stat positive">
+                    <div class="val" id="fireIncome">+0円</div>
+                    <div class="lbl">追加収入</div>
+                </div>
+                <div class="fire-stat negative">
+                    <div class="val" id="fireReputation">-0%</div>
+                    <div class="lbl">イメージ低下</div>
+                </div>
+            </div>
+            <p style="text-align:center; color:#ffcccc; font-size:0.85rem; margin-bottom:15px;">どう対応しますか？</p>
+            <div class="fire-response-btns">
+                <button class="btn" onclick="respondFire('apology')">🙇 謝罪動画を出す<br><small style="font-size:0.7rem;">登録者減少-50%</small></button>
+                <button class="btn btn-secondary" onclick="respondFire('ignore')">😐 無視する<br><small style="font-size:0.7rem;">通常処理</small></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="resetModal">
+    <div class="modal-content">
+        <h2>⚠️ データリセット確認</h2>
+        <p style="text-align:center; margin-bottom:20px; color:#aaa;">
+            本当に全てのデータを消去しますか？<br>
+            <strong style="color:var(--secondary);">この操作は取り消せません！</strong>
+        </p>
+        <div style="text-align:center;">
+            <button class="btn btn-danger" onclick="executeReset()">🗑️ はい、消去します</button>
+            <button class="btn btn-secondary" onclick="closeResetModal()">❌ キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="addChannelModal">
+    <div class="modal-content">
+        <h2>📺 サブチャンネル作成</h2>
+        <p style="text-align:center; margin-bottom:15px; color:#aaa;">
+            新しいチャンネルを作成します<br>
+            <strong style="color:#00bcd4;">（最大3チャンネルまで）</strong>
+        </p>
+        <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:5px; color:#aaa; font-size:0.9rem;">チャンネル名</label>
+            <input type="text" class="text-input" id="newChannelNameInput" placeholder="サブチャンネル名..." maxlength="20">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="display:block; margin-bottom:10px; color:#aaa; font-size:0.9rem;">アイコンを選択</label>
+            <div class="icon-picker" id="newChannelIconPicker" style="max-width:100%;"></div>
+        </div>
+        <div style="text-align:center;">
+            <button class="btn btn-sub" id="createChannelBtn" disabled onclick="createSubChannel()">📺 作成する</button>
+            <button class="btn btn-secondary" onclick="closeAddChannelModal()">❌ キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const ICONS = ['🎮','🎵','🍳','🎨','🏃','🔥','🎬','🎭','👾','🎯','🎲','🦊'];
+
+const GENRES = [
+    {id:'game', name:'🎮 ゲーム'},
+    {id:'cooking', name:'🍳 料理'},
+    {id:'music', name:'🎵 音楽'},
+    {id:'study', name:'📚 学習'},
+    {id:'vlog', name:'📹 Vlog'},
+    {id:'comedy', name:'🎭 コメディ'}
+];
+
+const TITLE_PARTS = [
+    {id:'shock', text:'【衝撃】', appeal:2},
+    {id:'honne', text:'本音で語る', appeal:1},
+    {id:'tameshita', text:'試してみた', appeal:2},
+    {id:'yabai', text:'結果ヤバい', appeal:3},
+    {id:'himitsu', text:'知らなきゃ損', appeal:2},
+    {id:'hantei', text:'ガチ検証', appeal:2},
+    {id:'1nichi', text:'1日やってみた', appeal:2},
+    {id:'rank', text:'ランキング', appeal:1},
+    {id:'urawaza', text:'裏技', appeal:3},
+    {id:'honne2', text:'正直に言うと', appeal:1}
+];
+
+const THUMBS = [
+    {id:'gae', name:'🤪 顔芸', emoji:'🤪', quality:1},
+    {id:'kirei', name:'✨ 綺麗め', emoji:'✨', quality:2},
+    {id:'impact', name:'💥 衝撃', emoji:'💥', quality:3},
+    {id:'mystery', name:'🔍 謎', emoji:'🔍', quality:2},
+    {id:'kawaii', name:'🌸 かわいい', emoji:'🌸', quality:1},
+    {id:'cool', name:'🔥 カッコいい', emoji:'🔥', quality:2},
+    {id:'cool2', name:'😎 サングラス', emoji:'😎', quality:2},
+    {id:'star', name:'🤩 星の目', emoji:'🤩', quality:3},
+    {id:'shock', name:'😱 驚き', emoji:'😱', quality:2},
+    {id:'party', name:'🥳 パーティ', emoji:'🥳', quality:2}
+];
+
+const SHORT_EMOJIS = ['😂','🔥','😱','😍','❤️','✨','💀','🥰','😎','🤣','💯','🙌','👏','🎉'];
+const COMMUNITY_EMOJIS = ['😊','🎉','🤔','❤️','🔥','👍','💪','🍳','🎵','🎁','🌟','✨','🙏'];
+
+const SHOP_ITEMS = [
+    {id:'cam', name:'📷 カメラ', desc:'画質向上', basePrice:500, effect:0.1},
+    {id:'mic', name:'🎙️ マイク', desc:'音質向上', basePrice:800, effect:0.1},
+    {id:'pc', name:'💻 編集PC', desc:'編集の質UP', basePrice:1500, effect:0.15},
+    {id:'light', name:'💡 照明', desc:'映像が明るく', basePrice:600, effect:0.08},
+    {id:'skill', name:'📖 企画力', desc:'面白い企画', basePrice:2000, effect:0.2},
+    {id:'edit_skill', name:'🎨 編集スキル', desc:'洗練される', basePrice:1200, effect:0.12},
+    {id:'software', name:'🎬 編集ソフト', desc:'プロ級エフェクト', basePrice:1800, effect:0.13},
+    {id:'analytics', name:'📊 分析ツール', desc:'トレンド把握', basePrice:2500, effect:0.18},
+    {id:'thumbnail', name:'🖼️ サムネ作成', desc:'クリック率UP', basePrice:1000, effect:0.11},
+    {id:'seo', name:'🔍 SEO対策', desc:'検索ヒット率UP', basePrice:3000, effect:0.22},
+    {id:'collab', name:'🤝 コラボ網', desc:'登録者増加ボーナス', basePrice:5000, effect:0.25},
+    {id:'business', name:'💼 ビジネス力', desc:'収益率UP', basePrice:4000, effect:0.2}
+];
+
+const COMMENTS_GOOD = ['面白かった！','最高です🔥','編集うますぎ','このチャンネル好き','毎日チェック！','笑いましたｗ','参考になった！','神回！','登録したよ！','応援してます！'];
+const COMMENTS_NORMAL = ['まあまあ','普通でした','また見てみる','うーん','次期待','頑張って'];
+const COMMENTS_BAD = ['つまらない','内容薄い','低評価','もう見ない','クオリティ低'];
+const COMMENTS_VIRAL = ['拡散するわ！','バズれ！！','おすすめから来た','今日一番の動画','友達に勧めた','何回も見てるｗ'];
+const SHORT_COMMENTS_GOOD = ['短いのに面白い！','もっと見たい','神ショート','登録した','好き','www'];
+const SHORT_COMMENTS_NORMAL = ['きた','おつ','普通','まあまあ'];
+const SHORT_COMMENTS_BAD = ['短いだけ','内容ない','うーん'];
+const COMPILATION_COMMENTS = ['総集編最高！','まとめて見れて嬉しい','名シーン揃いすぎ','またやって！','全部見たよ','懐かしい','神まとめ','保存した','友達にも見せたい','これぞ総集編'];
+
+const FIRE_COMMENTS = [
+    'これは酷すぎる...','チャンネル登録解除します','二度と見ない','クオリティ低すぎ','炎上商法？','残念すぎる','期待してたのに...','最悪の動画','時間返して','もう終わりだね','アンチになるわ','通報しました','信じられない','失望した','ゴミ動画'
+];
+const FIRE_COMMENTS_MIXED = [
+    '炎上してるけど面白い','これはネタ？','笑ってしまった','炎上商法成功','ネタとして最高','本気？','わざと？','面白いから許す','炎上目的だろ','でも見た'
+];
+
+const FIRE_REASONS = [
+    '過去の発言が掘り起こされました',
+    '発言が誤解を招きました',
+    'コラボ相手に問題が発覚',
+    'スポンサーとのトラブル',
+    'ファンの間で論争が発生',
+    '動画内の表現が物議を醸しました',
+    'SNSでの発言が炎上',
+    '他YouTuberとのトラブル',
+    '予期せぬハプニングが発生',
+    'ネット上で噂が拡散'
+];
+
+const THEMES = {
+    free: [
+        {id:'pink', name:'🌸 ピンク', primary:'#ff0050', secondary:'#ff4081', gradient:'linear-gradient(90deg, #ff0050, #ff4081)', price:0},
+        {id:'blue', name:'💙 ブルー', primary:'#2196f3', secondary:'#64b5f6', gradient:'linear-gradient(90deg, #1976d2, #42a5f5)', price:0},
+        {id:'green', name:'💚 グリーン', primary:'#4caf50', secondary:'#81c784', gradient:'linear-gradient(90deg, #388e3c, #66bb6a)', price:0},
+        {id:'purple', name:'💜 パープル', primary:'#9c27b0', secondary:'#ba68c8', gradient:'linear-gradient(90deg, #7b1fa2, #ab47bc)', price:0},
+        {id:'orange', name:'🧡 オレンジ', primary:'#ff9800', secondary:'#ffb74d', gradient:'linear-gradient(90deg, #f57c00, #ffa726)', price:0}
+    ],
+    paid: [
+        {id:'red', name:'🔴 レッド', primary:'#E53935', secondary:'#FF5252', gradient:'linear-gradient(90deg, #C62828, #E53935)', price:5000},
+        {id:'neon', name:'⚡ ネオン', primary:'#00ffff', secondary:'#ff00ff', gradient:'linear-gradient(90deg, #00ffff, #ff00ff)', price:8000},
+        {id:'rainbow', name:'🌈 レインボー', primary:'#ff0000', secondary:'#00ff00', gradient:'linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff)', price:10000},
+        {id:'dark', name:'🖤 ダーク', primary:'#666666', secondary:'#999999', gradient:'linear-gradient(90deg, #333333, #666666)', price:3000},
+        {id:'sakura', name:'🌸 桜', primary:'#ffb7c5', secondary:'#ff69b4', gradient:'linear-gradient(90deg, #ffb7c5, #ff69b4)', price:6000}
+    ],
+    reward: [
+        {id:'silver', name:'🥈 シルバー', primary:'#c0c0c0', secondary:'#e8e8e8', gradient:'linear-gradient(90deg, #a0a0a0, #d0d0d0)', requirement:100, reqText:'登録者100人'},
+        {id:'gold_reward', name:'🥇 ゴールド', primary:'#ffd700', secondary:'#ffed4e', gradient:'linear-gradient(90deg, #b8860b, #ffd700)', requirement:1000, reqText:'登録者1000人'},
+        {id:'platinum', name:'💎 プラチナ', primary:'#e5e4e2', secondary:'#ffffff', gradient:'linear-gradient(90deg, #a8b8c8, #e5e4e2)', requirement:10000, reqText:'登録者10000人'},
+        {id:'diamond', name:'💠 ダイヤモンド', primary:'#00bfff', secondary:'#87ceeb', gradient:'linear-gradient(90deg, #00bfff, #87ceeb)', requirement:50000, reqText:'登録者50000人'},
+        {id:'royal', name:'👑 ロイヤル', primary:'#ff0000', secondary:'#ffd700', gradient:'linear-gradient(90deg, #ff0000, #ffd700)', requirement:100000, reqText:'登録者100000人'}
+    ],
+    legendary: [
+        {
+            id:'youtube_red',
+            name:'???',
+            displayName:'▶️ YouTubeレッド',
+            primary:'#FF0000',
+            secondary:'#CC0000',
+            gradient:'linear-gradient(90deg, #FF0000, #CC0000)',
+            description:'YouTubeの象徴的なレッドカラー。真のYouTuberのみが手に入れる幻のテーマ。',
+            secretKeyword:'youtube'
+        }
+    ]
+};
+
+let game = {
+    channels: [],
+    activeChannelIndex: 0,
+    money: 2000,
+    equipment: {},
+    week: 1,
+    trend: null,
+    fireEnabled: false,
+    currentTheme: 'pink',
+    unlockedThemes: ['pink','blue','green','purple','orange'],
+    fireCount: 0,
+    pendingFire: null,
+    landingSuccess: 0  // ✅ 着陸成功回数
+};
+
+let selections = {};
+
+// ✅ 着陸ゲーム状態
+let landingState = {
+    running: false,
+    ship: { x: 300, y: 50, vx: 0, vy: 0, angle: 0, fuel: 100 },
+    pad: { x: 250, width: 100 },
+    keys: { up: false, left: false, right: false },
+    animationId: null,
+    ended: false
+};
+
+function getCurrentChannel() { return game.channels[game.activeChannelIndex]; }
+
+function getSelection(channelIndex) {
+    if (!selections[channelIndex]) {
+        selections[channelIndex] = {
+            video: {genre:null, titleParts:[], thumb:null},
+            short: {genre:null, emoji:null},
+            community: {emoji:null}
+        };
+    }
+    return selections[channelIndex];
+}
+
+function applyTheme(themeId) {
+    let theme = null;
+    for (const category of ['free','paid','reward','legendary']) {
+        theme = THEMES[category].find(t => t.id === themeId);
+        if (theme) break;
+    }
+    if (!theme) return;
+    document.documentElement.style.setProperty('--primary', theme.primary);
+    document.documentElement.style.setProperty('--secondary', theme.secondary);
+    document.documentElement.style.setProperty('--gradient', theme.gradient);
+    game.currentTheme = themeId;
+    renderThemeGrids();
+    saveGame();
+}
+
+function checkSecretKeyword(text) {
+    if (!text) return false;
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('youtube')) {
+        const legendaryTheme = THEMES.legendary[0];
+        if (!game.unlockedThemes.includes(legendaryTheme.id)) {
+            game.unlockedThemes.push(legendaryTheme.id);
+            return true;
+        }
+    }
+    return false;
+}
+
+function init() {
+    const iconPicker = document.getElementById('iconPicker');
+    ICONS.forEach(icon => {
+        const div = document.createElement('div');
+        div.className = 'icon-option';
+        div.textContent = icon;
+        div.onclick = () => selectIcon(icon, div);
+        iconPicker.appendChild(div);
+    });
+
+    document.getElementById('channelNameInput').addEventListener('input', checkSetupReady);
+    document.getElementById('communityTextInput').addEventListener('input', updateCommunityBtn);
+    document.getElementById('newChannelNameInput').addEventListener('input', checkNewChannelReady);
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => switchTab(tab.dataset.tab);
+    });
+
+    // ✅ 着陸ゲームキーボード操作
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === ' ') landingState.keys.up = true;
+        if (e.key === 'ArrowLeft') landingState.keys.left = true;
+        if (e.key === 'ArrowRight') landingState.keys.right = true;
+    });
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp' || e.key === ' ') landingState.keys.up = false;
+        if (e.key === 'ArrowLeft') landingState.keys.left = false;
+        if (e.key === 'ArrowRight') landingState.keys.right = false;
+    });
+
+    // ✅ 着陸ゲームボタン操作
+    const btnThrust = document.getElementById('btnThrust');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    
+    ['mousedown','touchstart'].forEach(evt => {
+        btnThrust.addEventListener(evt, (e) => { e.preventDefault(); landingState.keys.up = true; });
+        btnLeft.addEventListener(evt, (e) => { e.preventDefault(); landingState.keys.left = true; });
+        btnRight.addEventListener(evt, (e) => { e.preventDefault(); landingState.keys.right = true; });
+    });
+    ['mouseup','mouseleave','touchend'].forEach(evt => {
+        btnThrust.addEventListener(evt, () => landingState.keys.up = false);
+        btnLeft.addEventListener(evt, () => landingState.keys.left = false);
+        btnRight.addEventListener(evt, () => landingState.keys.right = false);
+    });
+
+    loadGame();
+}
+
+function selectIcon(icon, el) {
+    document.querySelectorAll('#iconPicker .icon-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    game._tempIcon = icon;
+    checkSetupReady();
+}
+
+function checkSetupReady() {
+    const name = document.getElementById('channelNameInput').value.trim();
+    const hasIcon = game._tempIcon && game._tempIcon.length > 0;
+    document.getElementById('startBtn').disabled = !(name && hasIcon);
+}
+
+document.getElementById('startBtn').onclick = () => {
+    const name = document.getElementById('channelNameInput').value.trim();
+    const icon = game._tempIcon;
+    game.channels = [{ name: name, icon: icon, subs: 0, totalViews: 0, posts: [], isSub: false }];
+    game.activeChannelIndex = 0;
+    game.money = 2000;
+    game.equipment = {};
+    game.fireEnabled = false;
+    game.currentTheme = 'pink';
+    game.unlockedThemes = ['pink','blue','green','purple','orange'];
+    game.fireCount = 0;
+    game.landingSuccess = 0;
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('headerStats').style.display = 'flex';
+    applyTheme('pink');
+    setupGame();
+};
+
+function setupGame() {
+    if (!game.trend) updateTrend();
+    buildCreatorUI();
+    updateAllUI();
+    saveGame();
+}
+
+function switchTab(tabId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tabId));
+    if (tabId === 'community') renderCommunityList();
+    if (tabId === 'history') renderVideoList();
+    if (tabId === 'compilation') updateCompilationUI();
+    if (tabId === 'dashboard') renderChannelList();
+    if (tabId === 'shop') renderShop();
+    if (tabId === 'settings') renderSettings();
+    if (tabId === 'landing') initLandingCanvas();
+}
+
+function updateAllUI() {
+    const ch = getCurrentChannel();
+    document.getElementById('hMoney').textContent = formatNum(game.money);
+    document.getElementById('hSubs').textContent = formatNum(ch.subs);
+    document.getElementById('hWeek').textContent = game.week;
+    document.getElementById('dashIcon').textContent = ch.icon;
+    document.getElementById('dashName').innerHTML = ch.name + (ch.isSub ? '<span class="channel-badge sub">サブ</span>' : '<span class="channel-badge">メイン</span>');
+    document.getElementById('dashDesc').textContent = getDescription(ch.subs);
+    document.getElementById('statSubs').textContent = formatNum(ch.subs);
+    document.getElementById('statViews').textContent = formatNum(ch.totalViews);
+    document.getElementById('statMoney').textContent = formatNum(game.money);
+    document.getElementById('statVideos').textContent = ch.posts.length;
+    document.getElementById('trendGenre').textContent = getTrendName();
+    document.getElementById('shopMoneyDisplay').textContent = formatNum(game.money);
+    document.getElementById('landingSuccess').textContent = game.landingSuccess;
+    updateVideoBtn();
+    updateShortBtn();
+    updateCommunityBtn();
+    updateCompilationUI();
+    renderShop();
+    renderChannelList();
+}
+
+function getDescription(subs) {
+    if (subs === 0) return '登録者0人からのスタート。';
+    if (subs < 100) return '少しずつ認知されてきた！';
+    if (subs < 1000) return '地道にファンがついてきた！';
+    if (subs < 10000) return '中堅YouTuber！';
+    if (subs < 100000) return '人気クリエイター！';
+    return '超大物YouTuber！';
+}
+
+function formatNum(n) {
+    if (n < 0) return '-' + formatNum(-n);
+    if (n < 1000) return Math.floor(n);
+    if (n < 10000) return (n/1000).toFixed(1) + 'K';
+    if (n < 1000000) return Math.floor(n/1000) + 'K';
+    if (n < 100000000) return (n/1000000).toFixed(1) + 'M';
+    return (n/1000000000).toFixed(2) + 'B';
+}
+
+function renderChannelList() {
+    const list = document.getElementById('channelList');
+    list.innerHTML = '';
+    game.channels.forEach((ch, idx) => {
+        const div = document.createElement('div');
+        div.className = 'channel-list-item' + (idx === game.activeChannelIndex ? ' active' : '');
+        div.onclick = () => switchChannel(idx);
+        div.innerHTML = `
+            <div class="mini-icon">${ch.icon}</div>
+            <div class="mini-info">
+                <div class="mini-name">${ch.name}${ch.isSub ? ' (サブ)' : ''}</div>
+                <div class="mini-subs">👥 ${formatNum(ch.subs)}人</div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    const addBtn = document.getElementById('addChannelBtn');
+    addBtn.disabled = game.channels.length >= 3;
+    addBtn.textContent = game.channels.length >= 3 ? '📺 最大数に達しました' : '+ サブチャンネル作成';
+}
+
+function switchChannel(idx) {
+    if (idx === game.activeChannelIndex) return;
+    game.activeChannelIndex = idx;
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    updateAllUI();
+    saveGame();
+}
+
+function openAddChannelModal() {
+    if (game.channels.length >= 3) { alert('チャンネルは最大3つまでです！'); return; }
+    document.getElementById('newChannelNameInput').value = '';
+    document.getElementById('addChannelModal').classList.add('active');
+    const picker = document.getElementById('newChannelIconPicker');
+    picker.innerHTML = '';
+    ICONS.forEach(icon => {
+        const div = document.createElement('div');
+        div.className = 'icon-option';
+        div.textContent = icon;
+        div.onclick = () => {
+            picker.querySelectorAll('.icon-option').forEach(e => e.classList.remove('selected'));
+            div.classList.add('selected');
+            game._newChannelIcon = icon;
+            checkNewChannelReady();
+        };
+        picker.appendChild(div);
+    });
+    game._newChannelIcon = null;
+    checkNewChannelReady();
+}
+
+function closeAddChannelModal() { document.getElementById('addChannelModal').classList.remove('active'); }
+
+function checkNewChannelReady() {
+    const name = document.getElementById('newChannelNameInput').value.trim();
+    const hasIcon = game._newChannelIcon && game._newChannelIcon.length > 0;
+    document.getElementById('createChannelBtn').disabled = !(name && hasIcon);
+}
+
+function createSubChannel() {
+    const name = document.getElementById('newChannelNameInput').value.trim();
+    const icon = game._newChannelIcon;
+    if (!name || !icon) return;
+    if (game.channels.length >= 3) { alert('チャンネルは最大3つまでです！'); return; }
+    game.channels.push({ name: name, icon: icon, subs: 0, totalViews: 0, posts: [], isSub: true });
+    closeAddChannelModal();
+    game.activeChannelIndex = game.channels.length - 1;
+    setupGame();
+    alert('🎉 サブチャンネル「' + name + '」を作成しました！');
+}
+
+function buildCreatorUI() {
+    const genreDiv = document.getElementById('genreOptions');
+    genreDiv.innerHTML = '';
+    GENRES.forEach(g => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = g.name;
+        btn.onclick = () => selectGenre(g.id, btn, 'video');
+        genreDiv.appendChild(btn);
+    });
+    const shortGenreDiv = document.getElementById('shortGenreOptions');
+    shortGenreDiv.innerHTML = '';
+    GENRES.forEach(g => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = g.name;
+        btn.onclick = () => selectGenre(g.id, btn, 'short');
+        shortGenreDiv.appendChild(btn);
+    });
+    const titleDiv = document.getElementById('titleOptions');
+    titleDiv.innerHTML = '';
+    TITLE_PARTS.forEach(p => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = p.text;
+        btn.onclick = () => toggleTitlePart(p.id, btn);
+        titleDiv.appendChild(btn);
+    });
+    const thumbDiv = document.getElementById('thumbOptions');
+    thumbDiv.innerHTML = '';
+    THUMBS.forEach(t => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = t.name;
+        btn.onclick = () => selectThumb(t.id, btn);
+        thumbDiv.appendChild(btn);
+    });
+    const shortEmojiDiv = document.getElementById('shortEmojiOptions');
+    shortEmojiDiv.innerHTML = '';
+    SHORT_EMOJIS.forEach(e => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = e;
+        btn.style.fontSize = '1.5rem';
+        btn.onclick = () => selectShortEmoji(e, btn);
+        shortEmojiDiv.appendChild(btn);
+    });
+    const commEmojiDiv = document.getElementById('communityEmojiOptions');
+    commEmojiDiv.innerHTML = '';
+    COMMUNITY_EMOJIS.forEach(e => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.textContent = e;
+        btn.style.fontSize = '1.5rem';
+        btn.onclick = () => selectCommunityEmoji(e, btn);
+        commEmojiDiv.appendChild(btn);
+    });
+}
+
+function selectGenre(id, btn, type) {
+    const selector = type === 'video' ? '#genreOptions' : '#shortGenreOptions';
+    document.querySelectorAll(selector + ' .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const sel = getSelection(game.activeChannelIndex);
+    if (type === 'video') { sel.video.genre = id; updateVideoPreview(); }
+    else { sel.short.genre = id; updateShortPreview(); }
+}
+
+function toggleTitlePart(id, btn) {
+    const sel = getSelection(game.activeChannelIndex);
+    const idx = sel.video.titleParts.indexOf(id);
+    if (idx >= 0) { sel.video.titleParts.splice(idx, 1); btn.classList.remove('selected'); }
+    else {
+        if (sel.video.titleParts.length >= 3) { alert('3つまで！'); return; }
+        sel.video.titleParts.push(id);
+        btn.classList.add('selected');
+    }
+    updateVideoPreview();
+}
+
+function selectThumb(id, btn) {
+    document.querySelectorAll('#thumbOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    getSelection(game.activeChannelIndex).video.thumb = id;
+    updateVideoPreview();
+}
+
+function selectShortEmoji(emoji, btn) {
+    document.querySelectorAll('#shortEmojiOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    getSelection(game.activeChannelIndex).short.emoji = emoji;
+    updateShortPreview();
+}
+
+function selectCommunityEmoji(emoji, btn) {
+    document.querySelectorAll('#communityEmojiOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    getSelection(game.activeChannelIndex).community.emoji = emoji;
+    updateCommunityBtn();
+}
+
+function updateVideoPreview() {
+    const sel = getSelection(game.activeChannelIndex);
+    const genre = sel.video.genre ? GENRES.find(g => g.id === sel.video.genre) : null;
+    const parts = sel.video.titleParts.map(id => TITLE_PARTS.find(p => p.id === id));
+    if (!genre) { document.getElementById('titlePreview').textContent = 'ジャンルと要素を選んでね...'; updateVideoBtn(); return; }
+    let title = genre.name;
+    if (parts.length > 0) title += ' ' + parts.map(p => p.text).join(' ');
+    document.getElementById('titlePreview').textContent = title;
+    updateVideoBtn();
+}
+
+function updateShortPreview() {
+    const sel = getSelection(game.activeChannelIndex);
+    const genre = sel.short.genre ? GENRES.find(g => g.id === sel.short.genre) : null;
+    const emoji = sel.short.emoji || '';
+    if (!genre) { document.getElementById('shortPreview').textContent = 'ジャンルと絵文字を選んでね...'; updateShortBtn(); return; }
+    let title = genre.name + 'のショート';
+    if (emoji) title += ' ' + emoji;
+    document.getElementById('shortPreview').textContent = title;
+    updateShortBtn();
+}
+
+function updateCompilationUI() {
+    const ch = getCurrentChannel();
+    const videoCount = ch.posts.filter(p => p.type === 'video').length;
+    const canCompile = videoCount >= 5;
+    document.getElementById('compilationProgress').textContent = videoCount;
+    document.getElementById('compilationProgressBar').style.width = Math.min(100, (videoCount / 5) * 100) + '%';
+    const preview = document.getElementById('compilationPreview');
+    const btn = document.getElementById('publishCompilationBtn');
+    if (!canCompile) {
+        preview.textContent = `⚠️ あと${5 - videoCount}本動画を投稿すると総集編が作成できます...`;
+        btn.disabled = true;
+        btn.textContent = `🔒 あと${5 - videoCount}本必要（100円）`;
+    } else {
+        const recentVideos = ch.posts.filter(p => p.type === 'video').slice(0, 5);
+        const genres = [...new Set(recentVideos.map(v => v.genre))];
+        const genreNames = genres.slice(0, 3).map(gid => { const g = GENRES.find(x => x.id === gid); return g ? g.name : ''; }).filter(Boolean).join('・');
+        preview.textContent = `【総集編】${genreNames || '人気'}動画まとめ 🎬✨`;
+        btn.disabled = game.money < 100;
+        btn.textContent = '📦 総集編を投稿（100円）';
+    }
+}
+
+function updateVideoBtn() {
+    const sel = getSelection(game.activeChannelIndex);
+    const ready = sel.video.genre && sel.video.titleParts.length > 0 && sel.video.thumb;
+    document.getElementById('publishVideoBtn').disabled = !(ready && game.money >= 50);
+}
+
+function updateShortBtn() {
+    const sel = getSelection(game.activeChannelIndex);
+    const ready = sel.short.genre && sel.short.emoji;
+    document.getElementById('publishShortBtn').disabled = !(ready && game.money >= 20);
+}
+
+function updateCommunityBtn() {
+    const sel = getSelection(game.activeChannelIndex);
+    const text = document.getElementById('communityTextInput').value.trim();
+    document.getElementById('postCommunityBtn').disabled = !(text && sel.community.emoji);
+}
+
+function getEquipmentBonus() { return Object.values(game.equipment).reduce((sum, v) => sum + v, 0); }
+
+function calculateFireChance() {
+    if (!game.fireEnabled) return 0;
+    return 0.05;
+}
+
+function triggerFireEvent(postData) {
+    const ch = getCurrentChannel();
+    const subsLossRate = 0.10 + Math.random() * 0.15;
+    const subsLoss = Math.floor(ch.subs * subsLossRate);
+    const viewsMultiplier = 10 + Math.floor(Math.random() * 20);
+    const bonusViews = postData.views * viewsMultiplier;
+    const bonusIncome = Math.floor(bonusViews * 0.5);
+    const reputationLoss = Math.floor(subsLossRate * 100);
+    const reason = FIRE_REASONS[Math.floor(Math.random() * FIRE_REASONS.length)];
+    
+    game.pendingFire = {
+        postData: postData,
+        subsLoss: subsLoss,
+        bonusViews: bonusViews,
+        bonusIncome: bonusIncome,
+        reputationLoss: reputationLoss,
+        reason: reason
+    };
+    
+    document.getElementById('fireReason').textContent = '理由：' + reason;
+    document.getElementById('fireViews').textContent = '+' + formatNum(bonusViews);
+    document.getElementById('fireSubsLoss').textContent = '-' + formatNum(subsLoss);
+    document.getElementById('fireIncome').textContent = '+' + formatNum(bonusIncome) + '円';
+    document.getElementById('fireReputation').textContent = '-' + reputationLoss + '%';
+    document.getElementById('fireModal').classList.add('active');
+}
+
+function respondFire(response) {
+    const fire = game.pendingFire;
+    if (!fire) return;
+    const ch = getCurrentChannel();
+    let finalSubsLoss = fire.subsLoss;
+    if (response === 'apology') {
+        finalSubsLoss = Math.floor(fire.subsLoss * 0.5);
+    }
+    ch.subs = Math.max(0, ch.subs - finalSubsLoss);
+    fire.postData.views += fire.bonusViews;
+    fire.postData.income += fire.bonusIncome;
+    fire.postData.isFire = true;
+    fire.postData.fireResponse = response;
+    fire.postData.fireReason = fire.reason;
+    ch.totalViews += fire.bonusViews;
+    game.money += fire.bonusIncome;
+    game.fireCount++;
+    
+    const fireComments = [];
+    const commentCount = 5 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < commentCount; i++) {
+        const isMixed = Math.random() < 0.3;
+        fireComments.push({
+            user: 'ユーザー' + Math.floor(Math.random() * 9999),
+            text: isMixed ? FIRE_COMMENTS_MIXED[Math.floor(Math.random() * FIRE_COMMENTS_MIXED.length)] : FIRE_COMMENTS[Math.floor(Math.random() * FIRE_COMMENTS.length)],
+            isFire: true
+        });
+    }
+    fire.postData.comments = fire.postData.comments.concat(fireComments);
+    
+    document.getElementById('fireModal').classList.remove('active');
+    game.pendingFire = null;
+    showResult(fire.postData, 'video', true);
+    updateAllUI();
+    saveGame();
+}
+
+function publishVideo() {
+    const ch = getCurrentChannel();
+    if (game.money < 50) { alert('資金不足！'); return; }
+    game.money -= 50;
+
+    const sel = getSelection(game.activeChannelIndex);
+    const genre = GENRES.find(g => g.id === sel.video.genre);
+    const parts = sel.video.titleParts.map(id => TITLE_PARTS.find(p => p.id === id));
+    const thumb = THUMBS.find(t => t.id === sel.video.thumb);
+    const fullTitle = genre.name + ' ' + parts.map(p => p.text).join(' ');
+
+    let quality = 0.5;
+    const titleAppeal = parts.reduce((sum, p) => sum + p.appeal, 0);
+    quality += titleAppeal * 0.08;
+    quality += thumb.quality * 0.1;
+    quality += getEquipmentBonus() * 0.05;
+    if (game.trend === sel.video.genre) quality *= 1.5;
+    const recentGenres = ch.posts.slice(-5).filter(p => p.type === 'video').map(p => p.genre);
+    if (recentGenres.filter(g => g === sel.video.genre).length >= 2) quality *= 0.7;
+    quality *= (0.7 + Math.random() * 0.6);
+
+    let baseViews = 0;
+    if (ch.subs === 0) baseViews = Math.floor(10 + Math.random() * 50);
+    else if (ch.subs < 100) baseViews = Math.floor(ch.subs * 0.8 + Math.random() * 80);
+    else if (ch.subs < 1000) baseViews = Math.floor(ch.subs * 2 + Math.random() * 500);
+    else if (ch.subs < 10000) baseViews = Math.floor(ch.subs * 3 + Math.random() * 3000);
+    else baseViews = Math.floor(ch.subs * 4 + Math.random() * 15000);
+    
+    let views = Math.max(1, Math.floor(baseViews * quality));
+    let income = Math.max(20, Math.floor(views * 1.0));
+    let newSubs = 0;
+    if (quality > 1.5) newSubs = Math.floor(views * 0.03 * quality);
+    else if (quality > 1.0) newSubs = Math.floor(views * 0.01);
+    else if (quality > 0.7) newSubs = Math.floor(views * 0.003);
+    if (quality < 0.5 && ch.subs > 10) newSubs = -Math.floor(Math.random() * 3);
+
+    let likes = Math.floor(views * (0.05 + quality * 0.05));
+    let rating = '😐 普通';
+    if (quality >= 2.0) rating = '🔥 バズった！';
+    else if (quality >= 1.5) rating = '😊 好評';
+    else if (quality >= 1.0) rating = '🙂 及第点';
+    else if (quality >= 0.5) rating = '😕 微妙';
+    else rating = '😢 失敗...';
+
+    let commentPool;
+    if (quality >= 2.0) commentPool = COMMENTS_VIRAL;
+    else if (quality >= 1.2) commentPool = COMMENTS_GOOD;
+    else if (quality >= 0.7) commentPool = COMMENTS_NORMAL;
+    else commentPool = COMMENTS_BAD;
+    const comments = [];
+    const commentCount = Math.min(5, Math.max(2, Math.floor(views / 100) + 1));
+    for (let i = 0; i < commentCount; i++) {
+        comments.push({ user: 'ユーザー' + Math.floor(Math.random() * 9999), text: commentPool[Math.floor(Math.random() * commentPool.length)] });
+    }
+
+    const postData = {
+        type: 'video', title: fullTitle, genre: sel.video.genre, thumb: thumb.emoji,
+        views: views, likes: likes, newSubs: newSubs, income: income,
+        quality: quality, rating: rating, comments: comments, week: game.week
+    };
+    ch.posts.unshift(postData);
+    ch.subs = Math.max(0, ch.subs + newSubs);
+    ch.totalViews += views;
+    game.money += income;
+
+    sel.video = {genre:null, titleParts:[], thumb:null};
+    document.querySelectorAll('#genreOptions .option-btn, #titleOptions .option-btn, #thumbOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    updateVideoPreview();
+
+    const fireChance = calculateFireChance();
+    if (Math.random() < fireChance) {
+        triggerFireEvent(postData);
+    } else {
+        showResult(postData, 'video', false);
+    }
+    updateAllUI();
+    saveGame();
+}
+
+function publishShort() {
+    const ch = getCurrentChannel();
+    if (game.money < 20) { alert('資金不足！'); return; }
+    game.money -= 20;
+
+    const sel = getSelection(game.activeChannelIndex);
+    const genre = GENRES.find(g => g.id === sel.short.genre);
+
+    let quality = 0.6 + getEquipmentBonus() * 0.03;
+    if (game.trend === sel.short.genre) quality *= 1.3;
+    quality *= (0.8 + Math.random() * 0.4);
+
+    let baseViews = 0;
+    if (ch.subs === 0) baseViews = Math.floor(50 + Math.random() * 200);
+    else if (ch.subs < 100) baseViews = Math.floor(ch.subs * 3 + Math.random() * 300);
+    else if (ch.subs < 1000) baseViews = Math.floor(ch.subs * 5 + Math.random() * 1000);
+    else if (ch.subs < 10000) baseViews = Math.floor(ch.subs * 8 + Math.random() * 5000);
+    else baseViews = Math.floor(ch.subs * 10 + Math.random() * 20000);
+    
+    let views = Math.max(10, Math.floor(baseViews * quality));
+    let income = Math.max(5, Math.floor(views * 0.3));
+    let newSubs = 0;
+    if (quality > 1.3) newSubs = Math.floor(views * 0.05 * quality);
+    else if (quality > 1.0) newSubs = Math.floor(views * 0.02);
+    else if (quality > 0.7) newSubs = Math.floor(views * 0.005);
+    if (quality < 0.5 && ch.subs > 10) newSubs = -Math.floor(Math.random() * 2);
+
+    let likes = Math.floor(views * (0.08 + quality * 0.05));
+    let rating = '😐 普通';
+    if (quality >= 1.8) rating = '🔥 バズった！';
+    else if (quality >= 1.3) rating = '😊 好評';
+    else if (quality >= 1.0) rating = '🙂 及第点';
+    else if (quality >= 0.7) rating = '😕 微妙';
+    else rating = '😢 失敗...';
+
+    let commentPool;
+    if (quality >= 1.8) commentPool = SHORT_COMMENTS_GOOD;
+    else if (quality >= 1.0) commentPool = SHORT_COMMENTS_NORMAL;
+    else commentPool = SHORT_COMMENTS_BAD;
+    const comments = [];
+    const commentCount = Math.min(4, Math.max(1, Math.floor(views / 200) + 1));
+    for (let i = 0; i < commentCount; i++) {
+        comments.push({ user: 'ユーザー' + Math.floor(Math.random() * 9999), text: commentPool[Math.floor(Math.random() * commentPool.length)] });
+    }
+
+    const fullTitle = genre.name + 'のショート ' + sel.short.emoji;
+    const postData = {
+        type: 'short', title: fullTitle, genre: sel.short.genre, emoji: sel.short.emoji,
+        views: views, likes: likes, newSubs: newSubs, income: income,
+        quality: quality, rating: rating, comments: comments, week: game.week
+    };
+    ch.posts.unshift(postData);
+    ch.subs = Math.max(0, ch.subs + newSubs);
+    ch.totalViews += views;
+    game.money += income;
+
+    sel.short = {genre:null, emoji:null};
+    document.querySelectorAll('#shortGenreOptions .option-btn, #shortEmojiOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    updateShortPreview();
+
+    showResult(postData, 'short', false);
+    updateAllUI();
+    saveGame();
+}
+
+function publishCompilation() {
+    const ch = getCurrentChannel();
+    const videoPosts = ch.posts.filter(p => p.type === 'video');
+    if (videoPosts.length < 5) { alert('総集編を作成するには動画が5本必要です！'); return; }
+    if (game.money < 100) { alert('資金不足！'); return; }
+    game.money -= 100;
+
+    const recentVideos = videoPosts.slice(0, 5);
+    const avgQuality = recentVideos.reduce((sum, v) => sum + (v.quality || 0.5), 0) / recentVideos.length;
+    let quality = avgQuality * 1.3 + 0.3;
+    quality *= (0.9 + Math.random() * 0.2);
+    const pastTotalViews = recentVideos.reduce((sum, v) => sum + v.views, 0);
+    let baseViews = Math.floor(pastTotalViews * 1.5);
+    if (ch.subs > 0) baseViews += Math.floor(ch.subs * 2);
+    let views = Math.max(100, Math.floor(baseViews * quality));
+    let income = Math.floor(views * 1.5);
+    let newSubs = Math.floor(views * 0.04 * quality);
+    let likes = Math.floor(views * 0.08);
+    let rating = '😐 普通';
+    if (quality >= 1.8) rating = '🔥 神総集編！';
+    else if (quality >= 1.4) rating = '😊 好評';
+    else if (quality >= 1.0) rating = '🙂 及第点';
+    else rating = '😕 微妙';
+
+    const comments = [];
+    const commentCount = Math.min(6, Math.max(3, Math.floor(views / 150) + 2));
+    for (let i = 0; i < commentCount; i++) {
+        comments.push({ user: 'ユーザー' + Math.floor(Math.random() * 9999), text: COMPILATION_COMMENTS[Math.floor(Math.random() * COMPILATION_COMMENTS.length)] });
+    }
+
+    const genres = [...new Set(recentVideos.map(v => v.genre))];
+    const genreNames = genres.slice(0, 3).map(gid => { const g = GENRES.find(x => x.id === gid); return g ? g.name : ''; }).filter(Boolean).join('・');
+    const fullTitle = `【総集編】${genreNames || '人気'}動画まとめ 🎬✨`;
+
+    const postData = {
+        type: 'compilation', title: fullTitle, genre: 'compilation', thumb: '📦',
+        views: views, likes: likes, newSubs: newSubs, income: income,
+        quality: quality, rating: rating, comments: comments, week: game.week,
+        sourceVideos: recentVideos.map(v => v.title)
+    };
+    ch.posts.unshift(postData);
+    ch.subs += newSubs;
+    ch.totalViews += views;
+    game.money += income;
+    recentVideos.forEach(v => { const bonus = Math.floor(v.views * 0.2); v.views += bonus; ch.totalViews += bonus; });
+
+    showResult(postData, 'compilation', false);
+    updateAllUI();
+    saveGame();
+}
+
+function postCommunity() {
+    const ch = getCurrentChannel();
+    const sel = getSelection(game.activeChannelIndex);
+    const text = document.getElementById('communityTextInput').value.trim();
+    const emoji = sel.community.emoji;
+    if (!text || !emoji) return;
+
+    const newlyUnlocked = checkSecretKeyword(text);
+
+    const reach = Math.max(5, Math.floor(ch.subs * 0.3 + Math.random() * 20));
+    const engagement = Math.floor(reach * (0.3 + Math.random() * 0.4));
+    const likes = Math.floor(engagement * 0.7);
+    const commentCount = Math.floor(engagement * 0.3);
+    let newSubs = 0;
+    if (ch.subs < 1000) newSubs = Math.floor(Math.random() * 3);
+    else if (ch.subs < 10000) newSubs = Math.floor(Math.random() * 5);
+    else newSubs = Math.floor(Math.random() * 10);
+
+    const comments = [];
+    const pools = ['いいね！','楽しみ！','応援してる','ファンです','🔥','❤️','期待！','わかる〜'];
+    for (let i = 0; i < Math.min(4, commentCount); i++) {
+        comments.push({ user: 'ユーザー' + Math.floor(Math.random() * 9999), text: pools[Math.floor(Math.random() * pools.length)] });
+    }
+
+    const postData = {
+        type: 'community', text: text, emoji: emoji, reach: reach,
+        likes: likes, commentCount: commentCount, newSubs: newSubs,
+        comments: comments, week: game.week
+    };
+    ch.posts.unshift(postData);
+    ch.subs += newSubs;
+
+    document.getElementById('communityTextInput').value = '';
+    sel.community.emoji = null;
+    document.querySelectorAll('#communityEmojiOptions .option-btn').forEach(b => b.classList.remove('selected'));
+    updateCommunityBtn();
+
+    document.getElementById('resultTitle').textContent = '💬 コミュニティ投稿結果';
+    document.getElementById('resultViews').textContent = formatNum(reach);
+    document.getElementById('resultViewsLabel').textContent = 'リーチ（表示回数）';
+    document.getElementById('resultLikes').textContent = formatNum(likes);
+    document.getElementById('resultLikesLabel').textContent = 'いいね';
+    document.getElementById('resultSubs').textContent = '+' + newSubs;
+    document.getElementById('resultMoney').textContent = '0円';
+    document.getElementById('resultRating').textContent = '😊';
+    document.getElementById('commentsTitle').textContent = '💬 ファンからの反応';
+    const commentsDiv = document.getElementById('resultComments');
+    commentsDiv.innerHTML = '';
+    if (comments.length === 0) { commentsDiv.innerHTML = '<div style="color:#888; text-align:center; padding:20px;">まだ反応はありません</div>'; }
+    else { comments.forEach(c => { const div = document.createElement('div'); div.className = 'comment'; div.innerHTML = `<div class="comment-user">@${c.user}</div><div>${c.text}</div>`; commentsDiv.appendChild(div); }); }
+    document.getElementById('resultModal').classList.add('active');
+
+    if (newlyUnlocked) {
+        setTimeout(() => {
+            alert('✨🎉 隠しテーマが解放されました！\n\n設定画面の「幻のテーマ」を確認してください！');
+        }, 500);
+    }
+
+    renderCommunityList();
+    updateAllUI();
+    saveGame();
+}
+
+function showResult(v, type, isFire) {
+    const isShort = type === 'short';
+    const isCompilation = type === 'compilation';
+    document.getElementById('resultTitle').textContent = isFire ? '🔥 炎上イベント' : (isCompilation ? '📦 総集編結果' : (isShort ? '⚡ ショート結果' : '📊 動画結果'));
+    document.getElementById('resultViews').textContent = formatNum(v.views) + '回';
+    document.getElementById('resultViewsLabel').textContent = '再生数';
+    document.getElementById('resultLikes').textContent = formatNum(v.likes);
+    document.getElementById('resultLikesLabel').textContent = '高評価';
+    document.getElementById('resultSubs').textContent = (v.newSubs >= 0 ? '+' : '') + formatNum(v.newSubs);
+    document.getElementById('resultMoney').textContent = '+' + formatNum(v.income) + '円';
+    document.getElementById('resultRating').textContent = v.rating;
+    document.getElementById('commentsTitle').textContent = '💬 コメント';
+    const commentsDiv = document.getElementById('resultComments');
+    commentsDiv.innerHTML = '';
+    if (isCompilation && v.sourceVideos) {
+        const sourceDiv = document.createElement('div');
+        sourceDiv.style.cssText = 'margin-bottom:15px; padding:10px; background:var(--bg-light); border-radius:8px;';
+        sourceDiv.innerHTML = `<div style="color:#9c27b0; font-weight:bold; margin-bottom:8px;">📹 対象動画（再生数+20%ボーナス）</div><div style="font-size:0.85rem; color:#aaa; line-height:1.6;">${v.sourceVideos.map(t => '• ' + t).join('<br>')}</div>`;
+        commentsDiv.appendChild(sourceDiv);
+    }
+    v.comments.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'comment' + (c.isFire ? ' fire' : '');
+        div.innerHTML = `<div class="comment-user">${c.isFire ? '🔥' : '@'}${c.user}</div><div>${c.text}</div>`;
+        commentsDiv.appendChild(div);
+    });
+    document.getElementById('resultModal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('resultModal').classList.remove('active'); }
+function confirmReset() { document.getElementById('resetModal').classList.add('active'); }
+function closeResetModal() { document.getElementById('resetModal').classList.remove('active'); }
+function executeReset() { localStorage.removeItem('ytlife_save'); location.reload(); }
+
+function renderVideoList() {
+    const ch = getCurrentChannel();
+    const list = document.getElementById('videoList');
+    if (ch.posts.length === 0) { list.innerHTML = '<div class="empty-state">まだ投稿がありません</div>'; return; }
+    list.innerHTML = '';
+    ch.posts.forEach(v => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        let typeLabel, thumbContent, thumbClass;
+        if (v.type === 'video') {
+            typeLabel = '<span class="type-badge ' + (v.isFire ? 'fire' : 'video') + '">' + (v.isFire ? '🔥炎上' : '動画') + '</span>';
+            thumbContent = v.thumb || '🎬';
+            thumbClass = v.isFire ? 'fire' : '';
+        } else if (v.type === 'short') {
+            typeLabel = '<span class="type-badge short">ショート</span>';
+            thumbContent = v.emoji || '⚡';
+            thumbClass = 'short';
+        } else if (v.type === 'compilation') {
+            typeLabel = '<span class="type-badge compilation">総集編</span>';
+            thumbContent = v.thumb || '📦';
+            thumbClass = 'compilation';
+        } else {
+            typeLabel = '<span class="type-badge community">コミュニティ</span>';
+            thumbContent = v.emoji || '💬';
+            thumbClass = 'community';
+        }
+        const title = v.type === 'community' ? (v.text.substring(0, 30) + (v.text.length > 30 ? '...' : '')) : v.title;
+        item.innerHTML = `
+            <div class="video-thumb ${thumbClass}">${thumbContent}</div>
+            <div class="video-details">
+                <h4>${typeLabel}${title}</h4>
+                <div class="meta">第${v.week}週 ・ ${v.rating || ''}${v.isFire ? ' 🔥' : ''}</div>
+            </div>
+            <div class="video-results">
+                <div class="views">${formatNum(v.views || v.reach || 0)}${v.type === 'community' ? '人' : '回'}</div>
+                <div style="color:#aaa; font-size:0.75rem;">👍${formatNum(v.likes)} / 💰${formatNum(v.income || 0)}円</div>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function renderCommunityList() {
+    const ch = getCurrentChannel();
+    const list = document.getElementById('communityList');
+    const communityPosts = ch.posts.filter(p => p.type === 'community');
+    if (communityPosts.length === 0) { list.innerHTML = '<div class="empty-state">コミュニティ投稿がありません</div>'; return; }
+    list.innerHTML = '';
+    communityPosts.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'community-post';
+        div.innerHTML = `
+            <div class="post-header">
+                <div class="post-icon">${ch.icon}</div>
+                <div><div class="post-name">${ch.name}</div><div class="post-time">第${p.week}週</div></div>
+            </div>
+            <div class="post-text">${p.emoji} ${p.text}</div>
+            <div class="post-stats">
+                <span>👁️ ${formatNum(p.reach)}人</span>
+                <span>❤️ ${formatNum(p.likes)}</span>
+                <span>💬 ${p.commentCount}</span>
+                ${p.newSubs > 0 ? `<span style="color:#2ba640;">+${p.newSubs}登録者</span>` : ''}
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function renderShop() {
+    const grid = document.getElementById('shopGrid');
+    grid.innerHTML = '';
+    SHOP_ITEMS.forEach(item => {
+        const level = game.equipment[item.id] || 0;
+        const price = Math.floor(item.basePrice * Math.pow(1.8, level));
+        const maxLevel = 10;
+        const div = document.createElement('div');
+        div.className = 'shop-item';
+        div.innerHTML = `
+            <h4>${item.name} <span class="global-badge">全ch共通</span></h4>
+            <p>${item.desc}</p>
+            <div class="level">Lv.${level} / ${maxLevel}</div>
+            <button class="btn" ${level >= maxLevel || game.money < price ? 'disabled' : ''} onclick="buyItem('${item.id}')">
+                ${level >= maxLevel ? 'MAX' : '購入 ' + formatNum(price) + '円'}
+            </button>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+function buyItem(id) {
+    const item = SHOP_ITEMS.find(i => i.id === id);
+    const level = game.equipment[id] || 0;
+    const price = Math.floor(item.basePrice * Math.pow(1.8, level));
+    if (game.money < price || level >= 10) return;
+    game.money -= price;
+    game.equipment[id] = level + 1;
+    updateAllUI();
+    saveGame();
+    alert(`🛠️ ${item.name} を Lv.${level + 1} に強化しました！`);
+}
+
+function renderSettings() {
+    const fireToggle = document.getElementById('fireToggle');
+    if (game.fireEnabled) fireToggle.classList.add('on');
+    else fireToggle.classList.remove('on');
+    renderThemeGrids();
+    document.getElementById('playTime').textContent = game.week;
+    const totalPosts = game.channels.reduce((sum, ch) => sum + ch.posts.length, 0);
+    document.getElementById('totalPosts').textContent = totalPosts;
+    document.getElementById('fireCount').textContent = game.fireCount;
+    document.getElementById('landingSuccess').textContent = game.landingSuccess;
+}
+
+function renderThemeGrids() {
+    const ch = getCurrentChannel();
+    
+    const freeGrid = document.getElementById('freeThemeGrid');
+    freeGrid.innerHTML = '';
+    THEMES.free.forEach(theme => {
+        const div = document.createElement('div');
+        const isSelected = game.currentTheme === theme.id;
+        div.className = 'theme-item' + (isSelected ? ' selected' : '');
+        div.onclick = () => { applyTheme(theme.id); };
+        div.innerHTML = `<div class="theme-preview" style="background:${theme.gradient};"></div><div class="theme-name">${theme.name}</div><div class="theme-price">無料</div>`;
+        freeGrid.appendChild(div);
+    });
+    
+    const paidGrid = document.getElementById('paidThemeGrid');
+    paidGrid.innerHTML = '';
+    THEMES.paid.forEach(theme => {
+        const div = document.createElement('div');
+        const isUnlocked = game.unlockedThemes.includes(theme.id);
+        const isSelected = game.currentTheme === theme.id;
+        div.className = 'theme-item' + (isSelected ? ' selected' : '') + (!isUnlocked ? ' locked' : '');
+        div.onclick = () => {
+            if (!isUnlocked) {
+                if (game.money >= theme.price) {
+                    if (confirm(`${theme.name} を${formatNum(theme.price)}円で購入しますか？`)) {
+                        game.money -= theme.price;
+                        game.unlockedThemes.push(theme.id);
+                        applyTheme(theme.id);
+                        updateAllUI();
+                        saveGame();
+                        alert(`🎨 ${theme.name} を購入しました！`);
+                    }
+                } else {
+                    alert(`💰 資金不足！${formatNum(theme.price)}円必要です`);
+                }
+            } else {
+                applyTheme(theme.id);
+            }
+        };
+        div.innerHTML = `<div class="theme-preview" style="background:${theme.gradient};"></div><div class="theme-name">${theme.name}</div>${isUnlocked ? '<div class="theme-price">✅ 解放済み</div>' : `<div class="theme-price">💰 ${formatNum(theme.price)}円</div>`}`;
+        paidGrid.appendChild(div);
+    });
+    
+    const rewardGrid = document.getElementById('rewardThemeGrid');
+    rewardGrid.innerHTML = '';
+    THEMES.reward.forEach(theme => {
+        const div = document.createElement('div');
+        const reached = ch.subs >= theme.requirement;
+        const isSelected = game.currentTheme === theme.id;
+        if (reached && !game.unlockedThemes.includes(theme.id)) {
+            game.unlockedThemes.push(theme.id);
+        }
+        const actuallyUnlocked = game.unlockedThemes.includes(theme.id);
+        div.className = 'theme-item' + (isSelected ? ' selected' : '') + (!actuallyUnlocked ? ' locked' : '');
+        div.onclick = () => {
+            if (!actuallyUnlocked) {
+                alert(`🏆 ${theme.reqText}で解放されます！\n現在の登録者：${formatNum(ch.subs)}人`);
+            } else {
+                applyTheme(theme.id);
+            }
+        };
+        div.innerHTML = `<div class="theme-preview" style="background:${theme.gradient};"></div><div class="theme-name">${theme.name}</div>${actuallyUnlocked ? '<div class="theme-price">✅ 解放済み</div>' : `<div class="theme-requirement">🏆 ${theme.reqText}</div>`}`;
+        rewardGrid.appendChild(div);
+    });
+
+    const legendaryGrid = document.getElementById('legendaryThemeGrid');
+    legendaryGrid.innerHTML = '';
+    THEMES.legendary.forEach(theme => {
+        const div = document.createElement('div');
+        const actuallyUnlocked = game.unlockedThemes.includes(theme.id);
+        const isSelected = game.currentTheme === theme.id;
+        const displayName = actuallyUnlocked ? theme.displayName : theme.name;
+        
+        div.className = 'theme-item legendary' + (isSelected ? ' selected' : '') + (!actuallyUnlocked ? ' locked' : '');
+        div.onclick = () => {
+            if (!actuallyUnlocked) {
+                alert('✨ 謎のテーマ...\n\n何かが起こると解放されるかもしれません...\n（ヒント：コミュニティ投稿で「ある言葉」を使ってみて？）');
+            } else {
+                applyTheme(theme.id);
+            }
+        };
+        div.innerHTML = `
+            <div class="theme-preview" style="background:${theme.gradient};"></div>
+            <div class="theme-name">${displayName}</div>
+            ${actuallyUnlocked ? '<div class="theme-price">✅ 解放済み</div>' : '<div class="theme-requirement">❓ ？？？</div>'}
+        `;
+        legendaryGrid.appendChild(div);
+    });
+}
+
+function toggleFire() {
+    game.fireEnabled = !game.fireEnabled;
+    const toggle = document.getElementById('fireToggle');
+    if (game.fireEnabled) toggle.classList.add('on');
+    else toggle.classList.remove('on');
+    saveGame();
+    alert(game.fireEnabled ? '🔥 炎上イベントがONになりました！\nどんな動画でも5%の確率で炎上します' : '🔥 炎上イベントがOFFになりました');
+}
+
+function updateTrend() { game.trend = GENRES[Math.floor(Math.random() * GENRES.length)].id; }
+function getTrendName() { if (!game.trend) return 'なし'; return GENRES.find(g => g.id === game.trend).name; }
+
+function nextWeek() {
+    game.week++;
+    updateTrend();
+    game.channels.forEach(ch => {
+        let weeklyIncome = 0;
+        if (ch.subs >= 1000) weeklyIncome = Math.floor(ch.subs * 0.5);
+        else if (ch.subs >= 100) weeklyIncome = Math.floor(ch.subs * 0.2);
+        else if (ch.subs >= 10) weeklyIncome = 10;
+        if (weeklyIncome > 0) {
+            game.money += weeklyIncome;
+            ch.totalViews += Math.floor(weeklyIncome * 2);
+        }
+    });
+    updateAllUI();
+    saveGame();
+    alert('📅 ' + game.week + '週目！\n🔥 トレンド：' + getTrendName());
+}
+
+// =====================================================
+// ✅ 着陸ゲーム実装
+// =====================================================
+
+function initLandingCanvas() {
+    const canvas = document.getElementById('landingCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // キャンバスサイズ調整
+    const container = canvas.parentElement;
+    canvas.width = Math.min(600, container.clientWidth - 4);
+    canvas.height = 400;
+    
+    if (!landingState.running) {
+        drawLandingIdle(ctx, canvas);
+    }
+}
+
+function drawLandingIdle(ctx, canvas) {
+    // 背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#000428');
+    gradient.addColorStop(1, '#004e92');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 星
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 50; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height * 0.7;
+        const size = Math.random() * 2;
+        ctx.fillRect(x, y, size, size);
+    }
+    
+    // 月面
+    ctx.fillStyle = '#555';
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+    
+    // 着陸パッド
+    const padX = canvas.width / 2 - 50;
+    ctx.fillStyle = '#2ba640';
+    ctx.fillRect(padX, canvas.height - 45, 100, 5);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('LANDING PAD', canvas.width / 2, canvas.height - 50);
+    
+    // 宇宙船（静止）
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 100);
+    ctx.lineTo(canvas.width / 2 - 15, 130);
+    ctx.lineTo(canvas.width / 2 + 15, 130);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = '#aaa';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚀 開始ボタンを押してプレイ！', canvas.width / 2, 180);
+}
+
+function startLandingGame() {
+    const canvas = document.getElementById('landingCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 初期化
+    landingState.running = true;
+    landingState.ended = false;
+    landingState.ship = {
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: 30,
+        vx: (Math.random() - 0.5) * 2,
+        vy: 0,
+        angle: 0,
+        fuel: 100
+    };
+    landingState.pad = {
+        x: Math.random() * (canvas.width - 120) + 10,
+        width: 80
+    };
+    
+    document.getElementById('startLandingBtn').style.display = 'none';
+    document.getElementById('resetLandingBtn').style.display = 'inline-block';
+    document.getElementById('landingResult').style.display = 'none';
+    
+    // ゲームループ
+    if (landingState.animationId) cancelAnimationFrame(landingState.animationId);
+    landingLoop();
+}
+
+function landingLoop() {
+    const canvas = document.getElementById('landingCanvas');
+    const ctx = canvas.getContext('2d');
+    const ship = landingState.ship;
+    const pad = landingState.pad;
+    
+    if (!landingState.running || landingState.ended) return;
+    
+    // 物理演算
+    const gravity = 0.05;
+    const thrust = 0.15;
+    const moveSpeed = 0.1;
+    const maxSpeed = 5;
+    
+    // 重力
+    ship.vy += gravity;
+    
+    // 操作
+    if (landingState.keys.up && ship.fuel > 0) {
+        ship.vy -= thrust;
+        ship.fuel -= 0.3;
+        if (ship.fuel < 0) ship.fuel = 0;
+    }
+    if (landingState.keys.left) {
+        ship.vx -= moveSpeed;
+        ship.angle = -0.2;
+    } else if (landingState.keys.right) {
+        ship.vx += moveSpeed;
+        ship.angle = 0.2;
+    } else {
+        ship.angle = 0;
+    }
+    
+    // 速度制限
+    ship.vx = Math.max(-maxSpeed, Math.min(maxSpeed, ship.vx));
+    ship.vy = Math.max(-maxSpeed, Math.min(maxSpeed, ship.vy));
+    
+    // 位置更新
+    ship.x += ship.vx;
+    ship.y += ship.vy;
+    
+    // 壁判定
+    if (ship.x < 15) { ship.x = 15; ship.vx = 0; }
+    if (ship.x > canvas.width - 15) { ship.x = canvas.width - 15; ship.vx = 0; }
+    
+    // 地面判定
+    const groundY = canvas.height - 40;
+    const shipBottom = ship.y + 15;
+    
+    if (shipBottom >= groundY) {
+        // 着陸パッド上かどうか
+        const onPad = ship.x >= pad.x && ship.x <= pad.x + pad.width;
+        const speed = Math.abs(ship.vy);
+        const horizontalSpeed = Math.abs(ship.vx);
+        
+        landingState.ended = true;
+        landingState.running = false;
+        
+        if (onPad && speed <= 2 && horizontalSpeed <= 1 && ship.fuel >= 0) {
+            // 成功！
+            game.money += 500;
+            game.landingSuccess++;
+            showLandingResult(true, speed, ship.fuel);
+        } else {
+            // 失敗
+            game.money = Math.max(0, game.money - 200);
+            showLandingResult(false, speed, ship.fuel, onPad);
+        }
+        updateAllUI();
+        saveGame();
+        return;
+    }
+    
+    // 描画
+    drawLandingGame(ctx, canvas);
+    
+    // UI更新
+    const altitude = Math.max(0, Math.floor((groundY - shipBottom) / 2));
+    const speed = Math.abs(ship.vy).toFixed(1);
+    document.getElementById('landAltitude').textContent = altitude;
+    document.getElementById('landSpeed').textContent = speed;
+    document.getElementById('landFuel').textContent = Math.floor(ship.fuel);
+    document.getElementById('landScore').textContent = game.landingSuccess;
+    
+    // 速度の色変更
+    const speedStat = document.getElementById('landSpeedStat');
+    if (speed > 2) {
+        speedStat.classList.add('danger');
+        speedStat.classList.remove('safe');
+    } else {
+        speedStat.classList.remove('danger');
+        speedStat.classList.add('safe');
+    }
+    
+    landingState.animationId = requestAnimationFrame(landingLoop);
+}
+
+function drawLandingGame(ctx, canvas) {
+    const ship = landingState.ship;
+    const pad = landingState.pad;
+    
+    // 背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#000428');
+    gradient.addColorStop(1, '#004e92');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 星
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 50; i++) {
+        const x = (i * 37) % canvas.width;
+        const y = (i * 23) % (canvas.height * 0.7);
+        ctx.fillRect(x, y, 1.5, 1.5);
+    }
+    
+    // 月面
+    ctx.fillStyle = '#555';
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+    ctx.fillStyle = '#777';
+    for (let i = 0; i < canvas.width; i += 20) {
+        ctx.fillRect(i, canvas.height - 40, 10, 3);
+    }
+    
+    // 着陸パッド
+    ctx.fillStyle = '#2ba640';
+    ctx.fillRect(pad.x, canvas.height - 45, pad.width, 5);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('▼ LANDING ▼', pad.x + pad.width / 2, canvas.height - 50);
+    
+    // 宇宙船
+    ctx.save();
+    ctx.translate(ship.x, ship.y);
+    ctx.rotate(ship.angle);
+    
+    // 船体
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(-12, 10);
+    ctx.lineTo(12, 10);
+    ctx.closePath();
+    ctx.fill();
+    
+    // ウィンドウ
+    ctx.fillStyle = '#00bcd4';
+    ctx.beginPath();
+    ctx.arc(0, -2, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 噴射エフェクト
+    if (landingState.keys.up && ship.fuel > 0) {
+        ctx.fillStyle = '#ff8c00';
+        ctx.beginPath();
+        ctx.moveTo(-8, 10);
+        ctx.lineTo(0, 10 + 10 + Math.random() * 10);
+        ctx.lineTo(8, 10);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath();
+        ctx.moveTo(-4, 10);
+        ctx.lineTo(0, 10 + 5 + Math.random() * 5);
+        ctx.lineTo(4, 10);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    ctx.restore();
+    
+    // 速度インジケーター
+    const speed = Math.abs(ship.vy);
+    ctx.fillStyle = speed > 2 ? '#ff4500' : '#2ba640';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`速度: ${speed.toFixed(1)} m/s`, 10, 25);
+    
+    // 燃料バー
+    ctx.fillStyle = '#333';
+    ctx.fillRect(10, 35, 100, 10);
+    ctx.fillStyle = ship.fuel > 30 ? '#2ba640' : '#ff4500';
+    ctx.fillRect(10, 35, ship.fuel, 10);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(10, 35, 100, 10);
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(`燃料: ${Math.floor(ship.fuel)}%`, 10, 60);
+}
+
+function showLandingResult(success, speed, fuel, onPad) {
+    const resultDiv = document.getElementById('landingResult');
+    resultDiv.style.display = 'block';
+    
+    if (success) {
+        resultDiv.className = 'landing-result success';
+        resultDiv.innerHTML = `
+            🎉 着陸成功！<br>
+            <span style="font-size:0.9rem; color:#aaa;">
+                着陸速度: ${speed.toFixed(1)} m/s | 残り燃料: ${Math.floor(fuel)}%<br>
+                <strong style="color:#2ba640;">+500円獲得！</strong>
+            </span>
+        `;
+    } else {
+        let reason = '';
+        if (!onPad) reason = '着陸パッド外に着陸';
+        else if (speed > 2) reason = `着陸速度过快 (${speed.toFixed(1)} m/s)`;
+        else if (fuel < 0) reason = '燃料切れ';
+        else reason = '着陸失敗';
+        
+        resultDiv.className = 'landing-result fail';
+        resultDiv.innerHTML = `
+            💥 ${reason}！<br>
+            <span style="font-size:0.9rem; color:#aaa;">
+                <strong style="color:#ff4500;">-200円</strong>
+            </span>
+        `;
+    }
+}
+
+function resetLandingGame() {
+    landingState.running = false;
+    landingState.ended = false;
+    if (landingState.animationId) cancelAnimationFrame(landingState.animationId);
+    
+    document.getElementById('startLandingBtn').style.display = 'inline-block';
+    document.getElementById('resetLandingBtn').style.display = 'none';
+    document.getElementById('landingResult').style.display = 'none';
+    
+    const canvas = document.getElementById('landingCanvas');
+    const ctx = canvas.getContext('2d');
+    drawLandingIdle(ctx, canvas);
+}
+
+function saveGame() { 
+    const saveData = {
+        channels: game.channels,
+        activeChannelIndex: game.activeChannelIndex,
+        money: game.money,
+        equipment: game.equipment,
+        week: game.week,
+        trend: game.trend,
+        fireEnabled: game.fireEnabled,
+        currentTheme: game.currentTheme,
+        unlockedThemes: game.unlockedThemes,
+        fireCount: game.fireCount,
+        landingSuccess: game.landingSuccess
+    };
+    localStorage.setItem('ytlife_save', JSON.stringify(saveData)); 
+}
+
+function loadGame() {
+    const saved = localStorage.getItem('ytlife_save');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            if (data.channels && data.channels.length > 0) {
+                game = {...game, ...data};
+                if (game.money === undefined) game.money = 2000;
+                if (!game.equipment) game.equipment = {};
+                if (game.fireEnabled === undefined) game.fireEnabled = false;
+                if (!game.currentTheme) game.currentTheme = 'pink';
+                if (!game.unlockedThemes) game.unlockedThemes = ['pink','blue','green','purple','orange'];
+                if (game.fireCount === undefined) game.fireCount = 0;
+                if (game.landingSuccess === undefined) game.landingSuccess = 0;
+                game.channels.forEach(ch => {
+                    if (ch.equipment) {
+                        Object.keys(ch.equipment).forEach(key => {
+                            game.equipment[key] = Math.max(game.equipment[key] || 0, ch.equipment[key] || 0);
+                        });
+                        delete ch.equipment;
+                    }
+                });
+            } else if (data.channelName) {
+                game.channels = [{ name: data.channelName, icon: data.channelIcon, subs: data.subs || 0, totalViews: data.totalViews || 0, posts: data.posts || data.videos || [], isSub: false }];
+                game.activeChannelIndex = 0;
+                game.money = data.money || 2000;
+                game.equipment = data.equipment || {};
+                game.week = data.week || 1;
+                game.trend = data.trend || null;
+                game.fireEnabled = false;
+                game.currentTheme = 'pink';
+                game.unlockedThemes = ['pink','blue','green','purple','orange'];
+                game.fireCount = 0;
+                game.landingSuccess = 0;
+            }
+            if (game.channels && game.channels.length > 0) {
+                document.getElementById('setupScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
+                document.getElementById('headerStats').style.display = 'flex';
+                applyTheme(game.currentTheme);
+                setupGame();
+            }
+        } catch(e) { console.error('セーブデータ読み込みエラー:', e); }
+    }
+}
+
+init();
+</script>
+
+</body>
+</html>
